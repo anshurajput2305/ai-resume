@@ -1,0 +1,5 @@
+.env
+pycache/
+*.pyc
+temp_*.pdf
+node_modules/

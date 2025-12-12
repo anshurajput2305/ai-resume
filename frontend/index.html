@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Analyzer</title>
+  <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Particles.js for dynamic background -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <style>
+    :root{
+      --bg-dark: #0b0b0e;
+      --glass-weak: rgba(255,255,255,0.06);
+      --glass-strong: rgba(255,255,255,0.10);
+      --accent: #ff8c00;
+      --muted: #9aa4b2;
+    }
+
+    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+
+    /* Gradient overlay for depth */
+    .gradient-overlay{
+      position:fixed;inset:0;z-index:1;pointer-events:none;
+      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
+      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
+    }
+    @keyframes overlayShift{
+      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+    }
+
+    /* Particles container sits behind everything */
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+
+    /* Glass panels */
+    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
+    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+
+    /* Small helpers */
+    .accent { color: var(--accent); }
+    .muted { color: var(--muted); }
+
+    /* make sure your content sits above backgrounds */
+    .page-content { position: relative; z-index: 10; }
+
+    /* Responsive - reduce particles effect on mobile */
+    @media (max-width:700px){ #particles-js{opacity:0.8} }
+
+    /* tiny card hover lift */
+    .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
+    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+    
+#jobsContainer a,
+#jobsContainer button {
+  position: relative !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+#jobsContainer * {
+  pointer-events: auto !important;
+}
+
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-200">
+
+  <!-- Background layers -->
+  <div id="particles-js" aria-hidden="true"></div>
+  <div class="gradient-overlay" aria-hidden="true"></div>
+
+  <div class="page-content">
+    <!-- Navbar -->
+  <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-5xl mx-auto">
+
+
+
+
+      <div class="max-w-7xl mx-auto flex items-center justify-between py-0.1 px-6">
+        <div class="flex items-center gap-3 ">
+          <img src="/frontend/logo4.png" alt="Logo" class="h-14 w-auto rounded" />
+          <div>
+            <div class="text-sm font-semibold accent">Resume Analyzer</div>
+            <div class="text-xs muted">Smart · Fast · Accessible</div>
+          </div>
+        </div>
+
+        <nav class="hidden md:block">
+          <ul class="flex gap-6 text-slate-200">
+            <li><a href="#resume" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full"">Resume</a></li>
+            <li><a href="#demo" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">Demo</a></li>
+            <li><a href="#how" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">How it Works</a></li>
+            <li><a href="#tips" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">Tips</a></li>
+             <li class="relative group">
+
+  <!-- Main Button with Same Underline Effect -->
+  <li class="relative group">
+
+  <!-- ATS Tools Button (matching other navbar items) -->
+  <button
+    class="relative text-white-700 px-1
+           after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0
+           after:bg-orange-400 after:transition-all after:duration-300
+           hover:text-orange-500 hover:after:w-full">
+    ATS Tools ▾
+  </button>
+
+  <!-- Dropdown -->
+  <ul class="absolute hidden group-hover:block 
+             bg-white shadow-lg rounded-lg py-2 w-40 z-50">
+    <li>
+      <a href="/frontend/ats.html"
+         class="block px-4 py-2 text-black 
+                hover:bg-orange-100 hover:text-orange-600">
+        ATS Score
+      </a>
+    </li>
+  </ul>
+</li>
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Upload Section -->
+<section id="resume" class="px-6 py-20 max-w-6xl mx-auto">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+
+    <!-- LEFT: Upload box + Boost box -->
+    <div class="lg:col-span-2 flex flex-col gap-10">
+      
+      <!-- your existing upload card -->
+      <div class="max-w-md w-full glass rounded-3xl shadow-2xl p-10 text-center lift">
+        <!-- NOTHING CHANGED INSIDE -->
+        <h2 class="text-2xl font-semibold mb-6">📄 Upload Your Resume</h2>
+        <input type="file" id="resumeInput" accept=".pdf"
+          class="w-full border border-transparent rounded-lg p-2 text-sm mb-6 bg-transparent text-slate-100
+          file:mr-4 file:rounded-full file:border-0 file:bg-amber-50/10 file:px-4 file:py-2
+          file:text-sm file:font-semibold file:text-amber-300 hover:file:bg-amber-50/12" />
+        <button id="analyzeBtn" onclick="uploadResume()"
+          class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md">
+          Analyze
+        </button>
+        <ul id="resultList" class="mt-6 text-left text-slate-200"></ul>
+      </div>
+
+      <!-- your existing Boost card -->
+      <div class="max-w-md w-full glass  rounded-3xl p-8 shadow-lg lift">
+        <h3 class="text-2xl font-semibold accent mb-4">Boost Your Resume With AI</h3>
+        <p class="muted leading-relaxed">Upload your resume to instantly discover how to make it stand out...</p>
+        <ul class="mt-4 list-disc list-inside muted">
+          <li>ATS Compatibility Report</li>
+          <li>Keyword Optimization</li>
+          <li>Formatting & Readability Tips</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Recommended Jobs stays same, only moved -->
+    <aside class="lg:col-span-1">
+      <div class="w-full glass  rounded-3xl p-6 shadow-lg lift sticky top-24 max-h-[75vh] overflow-auto">
+        <h2 class="text-2xl font-semibold accent mb-6">🔍 Recommended Jobs</h2>
+        <p class="muted mb-4 text-sm ">Based on your resume analysis, here are the top job roles you might fit into.</p>
+        <div id="jobsContainer" class="grid gap-6">
+          <!-- Your JS will fill this -->
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</section>
+
+      </div>
+    </section>
+
+    <!-- Demo Video Section -->
+    <section id="demo" class="py-24">
+      <div class="max-w-5xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-bold accent mb-6">🎥 Demo in Action</h2>
+        <p class="muted mb-8 max-w-2xl mx-auto">Hover over the video to watch how the Resume Analyzer works. Instantly see how AI evaluates and enhances your resume for maximum impact.</p>
+
+        <div class="relative group mx-auto max-w-3xl aspect-video rounded-3xl overflow-hidden shadow-2xl">
+          <video id="demoVideo" muted loop preload="none" poster="/frontend/thumbnail.jpg"
+            class="w-full h-full object-cover rounded-3xl transition-transform duration-300 group-hover:scale-105">
+            <source src="/frontend/demo.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how" class="py-20">
+      <div class="max-w-6xl mx-auto text-center px-6">
+        <h2 class="text-3xl font-bold accent mb-8">How It Works</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="p-6 glass rounded-2xl shadow lift">
+            <h3 class="text-xl font-semibold mb-3">1️⃣ Upload Your Resume</h3>
+            <p class="muted">Choose your resume in PDF format and upload it in seconds.</p>
+          </div>
+          <div class="p-6 glass rounded-2xl shadow lift">
+            <h3 class="text-xl font-semibold mb-3">2️⃣ AI Review</h3>
+            <p class="muted">Our AI checks for structure, keywords, and ATS optimization.</p>
+          </div>
+          <div class="p-6 glass rounded-2xl shadow lift">
+            <h3 class="text-xl font-semibold mb-3">3️⃣ Get Instant Insights</h3>
+            <p class="muted">Receive detailed suggestions to make your resume job-ready.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tips Section -->
+    <section id="tips" class="py-20">
+      <div class="max-w-5xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-bold accent mb-8">Pro Tips to Improve Your Resume</h2>
+        <div class="space-y-8">
+          <div class="p-6 glass rounded-3xl shadow-md lift">
+            <h4 class="text-xl font-semibold mb-2">✅ Keep It Concise</h4>
+            <p class="muted">Recruiters spend only a few seconds scanning — keep your resume focused and clear.</p>
+          </div>
+          <div class="p-6 glass rounded-3xl shadow-md lift">
+            <h4 class="text-xl font-semibold mb-2">🎯 Use Relevant Keywords</h4>
+            <p class="muted">Match your skills and experience with job-specific keywords to pass ATS filters.</p>
+          </div>
+          <div class="p-6 glass rounded-3xl shadow-md lift">
+            <h4 class="text-xl font-semibold mb-2">📊 Show Achievements</h4>
+            <p class="muted">Quantify your results — “Reduced costs by 25%” or “Led 10-member team”.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-center py-6 muted">© 2025 Resume Analyzer | Designed with ❤️ and Orange</footer>
+  </div>
+
+  <!-- Hover-to-play video effect -->
+  <script>
+   document.addEventListener("DOMContentLoaded", () => {
+    const video = document.getElementById("demoVideo");
+    if (video) {
+      video.addEventListener("mouseenter", () => video.play());
+      video.addEventListener("mouseleave", () => video.pause());
+    }
+  });
+  </script>
+
+  <!-- Particles init: neon palette -->
+  <script>
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 300, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.28, random: false },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
+        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
+        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+      },
+      retina_detect: true
+    });
+
+    // reduce particle count on small screens for performance
+    if (window.innerWidth < 700) {
+      try {
+        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
+        if (p) p.particles.number.value = 50;
+      } catch (e) { /* silent */ }
+    }
+  </script>
+
+  <script defer src="/frontend/script.js"></script>
+</body>
+</html>
