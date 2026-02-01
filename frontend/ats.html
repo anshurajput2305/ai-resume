@@ -4,41 +4,95 @@
   <meta charset="UTF-8">
   <title>ATS Score Checker</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Particles.js for dynamic background -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <style>
+    :root{
+      --bg-dark: #0b0b0e;
+      --glass-weak: rgba(255,255,255,0.06);
+      --glass-strong: rgba(255,255,255,0.10);
+      --accent: #ff8c00;
+      --muted: #9aa4b2;
+    }
+
+    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+
+    /* Gradient overlay for depth */
+    .gradient-overlay{
+      position:fixed;inset:0;z-index:1;pointer-events:none;
+      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
+      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
+    }
+    @keyframes overlayShift{
+      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+    }
+
+    /* Particles container sits behind everything */
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+
+    /* Glass panels */
+    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
+    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+
+    /* Small helpers */
+    .accent { color: var(--accent); }
+    .muted { color: var(--muted); }
+
+    /* make sure your content sits above backgrounds */
+    .page-content { position: relative; z-index: 10; }
+
+    /* Responsive - reduce particles effect on mobile */
+    @media (max-width:700px){ #particles-js{opacity:0.8} }
+
+    /* tiny card hover lift */
+    .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
+    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+  </style>
 </head>
 
-<body class="min-h-screen bg-gray-100">
+<body class="min-h-screen flex flex-col text-gray-200">
 
-  <!-- Header -->
-  <header class="bg-white shadow-md p-4 text-center text-xl font-semibold text-orange-600">
-    ATS Score Checker
-  </header>
+  <!-- Background layers -->
+  <div id="particles-js" aria-hidden="true"></div>
+  <div class="gradient-overlay" aria-hidden="true"></div>
 
-  <!-- Main Container -->
-  <div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-lg">
+  <div class="page-content">
+    <!-- Header -->
+    <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-5xl mx-auto">
+      <div class="max-w-7xl mx-auto flex items-center justify-center py-0.1 px-6">
+        <div class="text-xl font-semibold accent">ATS Score Checker</div>
+      </div>
+    </header>
 
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-      Resume Text (Auto-Filled from Previous Upload)
-    </h2>
+    <!-- Main Container -->
+    <div class="max-w-3xl mx-auto mt-10 glass rounded-3xl shadow-2xl p-8 lift">
 
-    <!-- Prefilled Resume Text -->
-    <textarea id="resumeTextBox" rows="10"
-              class="w-full border rounded-lg p-3 mb-6"></textarea>
+      <h2 class="text-2xl font-semibold accent mb-4">
+        Resume Text (Auto-Filled from Previous Upload)
+      </h2>
 
-    <!-- JD Input -->
-    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Job Description:</h2>
+      <!-- Prefilled Resume Text -->
+      <textarea id="resumeTextBox" rows="10"
+                class="w-full border border-gray-600 rounded-lg p-3 mb-6 bg-gray-800/50 text-gray-200 placeholder-gray-400"></textarea>
 
-    <textarea id="atsJD" rows="6"
-              class="w-full border rounded-lg p-3 mb-4"></textarea>
+      <!-- JD Input -->
+      <h2 class="text-2xl font-semibold accent mb-2">Job Description:</h2>
 
-    <!-- Button -->
-    <button onclick="analyzeATS()"
-            class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600">
-      Calculate ATS Score
-    </button>
+      <textarea id="atsJD" rows="6"
+                class="w-full border border-gray-600 rounded-lg p-3 mb-4 bg-gray-800/50 text-gray-200 placeholder-gray-400"></textarea>
 
-    <!-- Result -->
-    <div id="atsResult" class="mt-6 text-lg font-semibold text-gray-800"></div>
+      <!-- Button -->
+      <button onclick="analyzeATS()"
+              class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+        Calculate ATS Score
+      </button>
 
+      <!-- Result -->
+      <div id="atsResult" class="mt-6 text-lg font-semibold text-gray-200"></div>
+
+    </div>
   </div>
 
   <!-- Prefill Resume -->
@@ -54,9 +108,142 @@
       }
     });
 
-    function analyzeATS() {
-      document.getElementById("atsResult").innerHTML =
-        "⚙ ATS scoring logic not yet connected to backend!";
+    async function analyzeATS() {
+      const resumeText = document.getElementById("resumeTextBox").value.trim();
+      const jobDescription = document.getElementById("atsJD").value.trim();
+      const resultDiv = document.getElementById("atsResult");
+      
+      // Validation
+      if (!resumeText) {
+        resultDiv.innerHTML = "❌ Please upload a resume first from the main page.";
+        // Auto-scroll to error message
+        setTimeout(() => {
+          resultDiv.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 100);
+        return;
+      }
+      
+      if (!jobDescription) {
+        resultDiv.innerHTML = "❌ Please enter a job description.";
+        // Auto-scroll to error message
+        setTimeout(() => {
+          resultDiv.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 100);
+        return;
+      }
+      
+      // Show loading
+      resultDiv.innerHTML = "🔄 Analyzing ATS compatibility...";
+      
+      try {
+        const response = await fetch('/calculate_ats_score', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            resume_text: resumeText,
+            job_description: jobDescription
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          resultDiv.innerHTML = `❌ Error: ${data.error}`;
+          return;
+        }
+        
+        if (data.success && data.analysis) {
+          const analysis = data.analysis;
+          
+          // Save analysis to localStorage for dashboard
+          localStorage.setItem("ats_analysis", JSON.stringify(analysis));
+          
+          // Show success message and redirect
+          resultDiv.innerHTML = `
+            <div class="bg-green-600/20 text-green-300 rounded-lg p-4 text-center">
+              <div class="text-lg font-semibold mb-2">✅ Analysis Complete!</div>
+              <div class="mb-4">ATS Score: <span class="text-2xl font-bold">${analysis.ats_score || 'N/A'}</span>/100</div>
+              <button onclick="window.location.href='/frontend/dashboard.html'" 
+                      class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+                View Detailed Dashboard
+              </button>
+            </div>
+          `;
+          
+          // Auto-scroll to results with smooth animation
+          setTimeout(() => {
+            resultDiv.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+          }, 100);
+          
+        } else {
+          resultDiv.innerHTML = "❌ Unable to analyze ATS score. Please try again.";
+          
+          // Auto-scroll to error message too
+          setTimeout(() => {
+            resultDiv.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+          }, 100);
+        }
+        
+      } catch (error) {
+        console.error('ATS Analysis Error:', error);
+        resultDiv.innerHTML = "❌ Network error. Please check your connection and try again.";
+        
+        // Auto-scroll to error message
+        setTimeout(() => {
+          resultDiv.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 100);
+      }
+    }
+  </script>
+
+  <!-- Particles init: neon palette -->
+  <script>
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 300, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.28, random: false },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
+        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
+        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+      },
+      retina_detect: true
+    });
+
+    // reduce particle count on small screens for performance
+    if (window.innerWidth < 700) {
+      try {
+        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
+        if (p) p.particles.number.value = 50;
+      } catch (e) { /* silent */ }
     }
   </script>
 

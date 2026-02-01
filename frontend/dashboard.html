@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ATS Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Particles.js for dynamic background -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <style>
+    :root{
+      --bg-dark: #0b0b0e;
+      --glass-weak: rgba(255,255,255,0.06);
+      --glass-strong: rgba(255,255,255,0.10);
+      --accent: #ff8c00;
+      --muted: #9aa4b2;
+    }
+
+    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+
+    /* Gradient overlay for depth */
+    .gradient-overlay{
+      position:fixed;inset:0;z-index:1;pointer-events:none;
+      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
+      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
+    }
+    @keyframes overlayShift{
+      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+    }
+
+    /* Particles container sits behind everything */
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+
+    /* Glass panels */
+    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
+    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+
+    /* Small helpers */
+    .accent { color: var(--accent); }
+    .muted { color: var(--muted); }
+
+    /* make sure your content sits above backgrounds */
+    .page-content { position: relative; z-index: 10; }
+
+    /* Responsive - reduce particles effect on mobile */
+    @media (max-width:700px){ #particles-js{opacity:0.8} }
+
+    /* tiny card hover lift */
+    .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
+    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+
+    /* Progress circle animation */
+    .progress-circle {
+      transform: rotate(-90deg);
+      transition: stroke-dasharray 1s ease-in-out;
+    }
+
+    /* Score animation */
+    @keyframes scoreCount {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .score-animate {
+      animation: scoreCount 0.8s ease-out;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-200">
+
+  <!-- Background layers -->
+  <div id="particles-js" aria-hidden="true"></div>
+  <div class="gradient-overlay" aria-hidden="true"></div>
+
+  <div class="page-content">
+    <!-- Header -->
+    <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto flex items-center justify-between py-0.1 px-6">
+        <div class="flex items-center gap-3">
+          <img src="/frontend/logo4.png" alt="Logo" class="h-10 w-auto rounded" />
+          <div class="text-xl font-semibold accent">ATS Dashboard</div>
+        </div>
+        <nav class="flex gap-4">
+          <a href="/frontend/index.html" class="text-gray-300 hover:text-orange-400 transition-colors">Home</a>
+          <a href="/frontend/ats.html" class="text-gray-300 hover:text-orange-400 transition-colors">ATS Checker</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="max-w-6xl mx-auto mt-10 px-6">
+      
+      <!-- Main Score Card -->
+      <div class="glass rounded-3xl shadow-2xl p-8 mb-8 lift">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+          
+          <!-- Score Display with Horizontal Meter -->
+          <div class="flex flex-col items-center">
+            <!-- Main Score Display -->
+            <div class="text-center mb-8">
+              <div id="scoreDisplay" class="text-8xl font-bold accent score-animate leading-none mb-2">--</div>
+              <div class="text-lg muted font-medium">ATS Score</div>
+            </div>
+            
+            <!-- Horizontal Progress Meter -->
+            <div class="w-full max-w-lg mb-6">
+              <!-- Progress Bar Container -->
+              <div class="relative h-6 bg-gray-800/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                <!-- Color Segments Background -->
+                <div class="absolute inset-0 flex">
+                  <div class="flex-1 bg-gradient-to-r from-red-500/20 to-red-400/20"></div>
+                  <div class="flex-1 bg-gradient-to-r from-yellow-500/20 to-yellow-400/20"></div>
+                  <div class="flex-1 bg-gradient-to-r from-orange-500/20 to-orange-400/20"></div>
+                  <div class="flex-1 bg-gradient-to-r from-green-500/20 to-green-400/20"></div>
+                </div>
+                
+                <!-- Progress Fill with Multi-Color Gradient -->
+                <div id="horizontalProgress" 
+                     class="absolute left-0 top-0 h-full rounded-full transition-all duration-2000 ease-out"
+                     style="width: 0%; background: linear-gradient(to right, #ef4444 0%, #eab308 25%, #f97316 50%, #22c55e 75%, #22c55e 100%); filter: drop-shadow(0 0 12px rgba(255, 140, 0, 0.6));">
+                </div>
+                
+                <!-- Score Marker -->
+                <div id="horizontalMarker" 
+                     class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full border-4 border-orange-500 transition-all duration-2000 ease-out"
+                     style="left: 0%; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));">
+                  <div class="absolute inset-1 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full"></div>
+                </div>
+              </div>
+              
+              <!-- Score Labels -->
+              <div class="flex justify-between text-sm muted mt-3 font-medium">
+                <span>0</span>
+                <span>25</span>
+                <span>50</span>
+                <span>75</span>
+                <span>100</span>
+              </div>
+            </div>
+            
+            <!-- Performance Labels -->
+            <div class="flex justify-between text-sm muted mb-6 w-full max-w-lg font-medium">
+              <span class="text-red-400">Poor</span>
+              <span class="text-yellow-400">Fair</span>
+              <span class="text-orange-400">Good</span>
+              <span class="text-green-400">Excellent</span>
+            </div>
+            
+            <!-- Score interpretation -->
+            <div id="scoreInterpretation" class="text-center text-lg font-semibold">
+              <span class="muted">Awaiting Analysis</span>
+            </div>
+          </div>
+
+          <!-- Score Details -->
+          <div class="lg:col-span-2">
+            <h2 class="text-3xl font-bold accent mb-4">Resume Analysis Results</h2>
+            <div id="scoreSummary" class="text-lg muted mb-6">
+              Upload a resume and run ATS analysis to see your results here.
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="glass rounded-lg p-4 text-center">
+                <div id="matchedCount" class="text-2xl font-bold text-green-400">--</div>
+                <div class="text-xs muted">Matched Keywords</div>
+              </div>
+              <div class="glass rounded-lg p-4 text-center">
+                <div id="missingCount" class="text-2xl font-bold text-red-400">--</div>
+                <div class="text-xs muted">Missing Keywords</div>
+              </div>
+              <div class="glass rounded-lg p-4 text-center">
+                <div id="skillsCount" class="text-2xl font-bold text-orange-400">--</div>
+                <div class="text-xs muted">Skills Gap</div>
+              </div>
+              <div class="glass rounded-lg p-4 text-center">
+                <div id="recommendationsCount" class="text-2xl font-bold text-blue-400">--</div>
+                <div class="text-xs muted">Recommendations</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Analysis Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        
+        <!-- Matched Keywords -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-green-400 mr-2">✅</span> Matched Keywords
+          </h3>
+          <div id="matchedKeywords" class="flex flex-wrap gap-2">
+            <div class="text-muted">No data available</div>
+          </div>
+        </div>
+
+        <!-- Missing Keywords -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-red-400 mr-2">❌</span> Missing Keywords
+          </h3>
+          <div id="missingKeywords" class="flex flex-wrap gap-2">
+            <div class="text-muted">No data available</div>
+          </div>
+        </div>
+
+        <!-- Skills Gap -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-orange-400 mr-2">🎯</span> Skills to Develop
+          </h3>
+          <div id="skillsGap" class="flex flex-wrap gap-2">
+            <div class="text-muted">No data available</div>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-blue-400 mr-2">💡</span> Recommendations
+          </h3>
+          <div id="recommendations" class="space-y-2">
+            <div class="text-muted">No data available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Insights Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <!-- Performance Breakdown -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-purple-400 mr-2">📊</span> Performance Breakdown
+          </h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm muted">Keyword Match Rate</span>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div id="keywordMatchBar" class="h-full bg-green-500 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <span id="keywordMatchPercent" class="text-sm font-semibold text-green-400">0%</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm muted">Skills Coverage</span>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div id="skillsCoverageBar" class="h-full bg-orange-500 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <span id="skillsCoveragePercent" class="text-sm font-semibold text-orange-400">0%</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm muted">Overall Readiness</span>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div id="readinessBar" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <span id="readinessPercent" class="text-sm font-semibold text-blue-400">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Insights -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-cyan-400 mr-2">💡</span> Quick Insights
+          </h3>
+          <div id="quickInsights" class="space-y-3">
+            <div class="text-muted text-sm">Run analysis to see insights</div>
+          </div>
+        </div>
+
+        <!-- Action Items -->
+        <div class="glass rounded-3xl shadow-lg p-6 lift">
+          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
+            <span class="text-pink-400 mr-2">🎯</span> Priority Actions
+          </h3>
+          <div id="priorityActions" class="space-y-3">
+            <div class="text-muted text-sm">No actions available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="text-center mb-8">
+        <a href="/frontend/ats.html" 
+           class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg mr-4">
+          Run New Analysis
+        </a>
+        <button onclick="exportResults()" 
+                class="glass border border-orange-400 text-orange-400 px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:bg-orange-400/10">
+          Export Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadDashboardData();
+    });
+
+    function loadDashboardData() {
+      const atsData = localStorage.getItem("ats_analysis");
+      
+      if (atsData) {
+        try {
+          const analysis = JSON.parse(atsData);
+          displayAnalysis(analysis);
+        } catch (e) {
+          console.error("Error parsing ATS data:", e);
+        }
+      } else {
+        // Show empty state
+        showEmptyState();
+      }
+    }
+
+    function displayAnalysis(analysis) {
+      // Update main score with animation
+      const score = analysis.ats_score || 0;
+      animateScore(score);
+      
+      // Update summary
+      document.getElementById("scoreSummary").textContent = 
+        analysis.summary || "Analysis completed successfully.";
+      
+      // Update quick stats
+      document.getElementById("matchedCount").textContent = 
+        analysis.keyword_matches ? analysis.keyword_matches.length : 0;
+      document.getElementById("missingCount").textContent = 
+        analysis.missing_keywords ? analysis.missing_keywords.length : 0;
+      document.getElementById("skillsCount").textContent = 
+        analysis.skills_gap ? analysis.skills_gap.length : 0;
+      document.getElementById("recommendationsCount").textContent = 
+        analysis.recommendations ? analysis.recommendations.length : 0;
+      
+      // Update detailed sections
+      updateKeywordSection("matchedKeywords", analysis.keyword_matches, "bg-green-600/20 text-green-300");
+      updateKeywordSection("missingKeywords", analysis.missing_keywords, "bg-red-600/20 text-red-300");
+      updateKeywordSection("skillsGap", analysis.skills_gap, "bg-orange-600/20 text-orange-300");
+      updateRecommendations(analysis.recommendations);
+      
+      // Update analytics sections
+      setTimeout(() => {
+        updateAnalytics(analysis);
+      }, 1000);
+    }
+
+    function updateAnalytics(analysis) {
+      const matchedCount = analysis.keyword_matches ? analysis.keyword_matches.length : 0;
+      const missingCount = analysis.missing_keywords ? analysis.missing_keywords.length : 0;
+      const totalKeywords = matchedCount + missingCount;
+      
+      // Update performance bars
+      const keywordMatchRate = totalKeywords > 0 ? (matchedCount / totalKeywords) * 100 : 0;
+      const skillsCoverage = analysis.ats_score || 0;
+      const readiness = Math.min(100, (keywordMatchRate + skillsCoverage) / 2);
+      
+      // Animate bars
+      setTimeout(() => {
+        document.getElementById("keywordMatchBar").style.width = `${keywordMatchRate}%`;
+        document.getElementById("keywordMatchPercent").textContent = `${Math.round(keywordMatchRate)}%`;
+        
+        document.getElementById("skillsCoverageBar").style.width = `${skillsCoverage}%`;
+        document.getElementById("skillsCoveragePercent").textContent = `${Math.round(skillsCoverage)}%`;
+        
+        document.getElementById("readinessBar").style.width = `${readiness}%`;
+        document.getElementById("readinessPercent").textContent = `${Math.round(readiness)}%`;
+      }, 500);
+      
+      // Update quick insights
+      const insights = [];
+      if (keywordMatchRate >= 80) {
+        insights.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">Strong keyword alignment</span></div>');
+      } else if (keywordMatchRate >= 60) {
+        insights.push('<div class="flex items-center gap-2"><span class="text-yellow-400">⚠</span><span class="text-sm">Good keyword coverage</span></div>');
+      } else {
+        insights.push('<div class="flex items-center gap-2"><span class="text-red-400">✗</span><span class="text-sm">Improve keyword matching</span></div>');
+      }
+      
+      if (analysis.ats_score >= 75) {
+        insights.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">ATS-friendly format</span></div>');
+      } else {
+        insights.push('<div class="flex items-center gap-2"><span class="text-orange-400">⚠</span><span class="text-sm">Format needs optimization</span></div>');
+      }
+      
+      document.getElementById("quickInsights").innerHTML = insights.join('');
+      
+      // Update priority actions
+      const actions = [];
+      if (missingCount > 0) {
+        actions.push(`<div class="flex items-center gap-2"><span class="text-red-400">1.</span><span class="text-sm">Add ${Math.min(3, missingCount)} missing keywords</span></div>`);
+      }
+      if (analysis.ats_score < 75) {
+        actions.push('<div class="flex items-center gap-2"><span class="text-orange-400">2.</span><span class="text-sm">Improve resume formatting</span></div>');
+      }
+      if (analysis.skills_gap && analysis.skills_gap.length > 0) {
+        actions.push(`<div class="flex items-center gap-2"><span class="text-blue-400">3.</span><span class="text-sm">Develop ${analysis.skills_gap.length} key skills</span></div>`);
+      }
+      
+      if (actions.length === 0) {
+        actions.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">Resume looks great!</span></div>');
+      }
+      
+      document.getElementById("priorityActions").innerHTML = actions.join('');
+    }
+
+    function animateScore(targetScore) {
+      const scoreElement = document.getElementById("scoreDisplay");
+      const horizontalProgress = document.getElementById("horizontalProgress");
+      const horizontalMarker = document.getElementById("horizontalMarker");
+      const scoreInterpretation = document.getElementById("scoreInterpretation");
+      
+      // Animate number counting
+      let currentScore = 0;
+      const increment = targetScore / 50; // 50 steps
+      const timer = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+          currentScore = targetScore;
+          clearInterval(timer);
+        }
+        scoreElement.textContent = Math.round(currentScore);
+      }, 20);
+      
+      // Animate horizontal meter
+      setTimeout(() => {
+        animateHorizontalMeter(targetScore);
+      }, 300);
+      
+      // Update score interpretation
+      setTimeout(() => {
+        updateScoreInterpretation(targetScore);
+      }, 1800);
+    }
+    
+    function animateHorizontalMeter(score) {
+      const horizontalProgress = document.getElementById("horizontalProgress");
+      const horizontalMarker = document.getElementById("horizontalMarker");
+      
+      // Calculate percentage
+      const percentage = Math.min(100, Math.max(0, score));
+      
+      // Update progress bar width - the gradient will show the appropriate color at that position
+      horizontalProgress.style.width = `${percentage}%`;
+      
+      // Update marker position
+      horizontalMarker.style.left = `${percentage}%`;
+      
+      // Update marker color based on score range
+      const markerInner = horizontalMarker.querySelector('div');
+      if (score >= 75) {
+        // Green section
+        horizontalMarker.style.borderColor = '#22c55e';
+        markerInner.style.background = 'linear-gradient(to bottom right, #22c55e, #16a34a)';
+        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(34, 197, 94, 0.6))";
+      } else if (score >= 50) {
+        // Orange section
+        horizontalMarker.style.borderColor = '#f97316';
+        markerInner.style.background = 'linear-gradient(to bottom right, #f97316, #ea580c)';
+        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(249, 115, 22, 0.6))";
+      } else if (score >= 25) {
+        // Yellow section
+        horizontalMarker.style.borderColor = '#eab308';
+        markerInner.style.background = 'linear-gradient(to bottom right, #eab308, #ca8a04)';
+        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(234, 179, 8, 0.6))";
+      } else {
+        // Red section
+        horizontalMarker.style.borderColor = '#ef4444';
+        markerInner.style.background = 'linear-gradient(to bottom right, #ef4444, #dc2626)';
+        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(239, 68, 68, 0.6))";
+      }
+    }
+    
+    function updateScoreInterpretation(score) {
+      const interpretationElement = document.getElementById("scoreInterpretation");
+      let interpretation = "";
+      let colorClass = "";
+      
+      if (score >= 90) {
+        interpretation = "🎉 Excellent - ATS Optimized";
+        colorClass = "text-green-400";
+      } else if (score >= 75) {
+        interpretation = "✅ Good - Minor Improvements Needed";
+        colorClass = "text-green-300";
+      } else if (score >= 60) {
+        interpretation = "⚠️ Fair - Needs Optimization";
+        colorClass = "text-yellow-400";
+      } else if (score >= 40) {
+        interpretation = "❌ Poor - Major Improvements Required";
+        colorClass = "text-orange-400";
+      } else {
+        interpretation = "🚫 Very Poor - Complete Overhaul Needed";
+        colorClass = "text-red-400";
+      }
+      
+      interpretationElement.innerHTML = `<span class="${colorClass}">${interpretation}</span>`;
+    }
+    
+    function animateMainSemiCircle(score) {
+      const mainProgressArc = document.getElementById("mainProgressArc");
+      const mainScoreMarker = document.getElementById("mainScoreMarker");
+      
+      // Calculate angle for semi-circle (180 degrees total)
+      const angle = (score / 100) * 180;
+      const radians = (angle - 90) * (Math.PI / 180); // -90 to start from left
+      
+      // Calculate end point of arc (center at 140, 140, radius 100)
+      const centerX = 140;
+      const centerY = 140;
+      const radius = 100;
+      const endX = centerX + radius * Math.cos(radians);
+      const endY = centerY + radius * Math.sin(radians);
+      
+      // Create arc path
+      const largeArcFlag = angle > 90 ? 1 : 0;
+      const arcPath = `M 40 140 A 100 100 0 ${largeArcFlag} 1 ${endX} ${endY}`;
+      
+      // Update arc
+      mainProgressArc.setAttribute("d", arcPath);
+      
+      // Update marker position
+      mainScoreMarker.setAttribute("cx", endX);
+      mainScoreMarker.setAttribute("cy", endY);
+    }
+    
+    function animateSemiCircle(score) {
+      // This function is no longer needed as we're using the main semi-circle
+      // Keeping it for compatibility but it won't be called
+    }
+    
+    function updateScoreInterpretation(score) {
+      const interpretationElement = document.getElementById("scoreInterpretation");
+      let interpretation = "";
+      let colorClass = "";
+      
+      if (score >= 90) {
+        interpretation = "🎉 Excellent - ATS Optimized";
+        colorClass = "text-green-400";
+      } else if (score >= 75) {
+        interpretation = "✅ Good - Minor Improvements Needed";
+        colorClass = "text-green-300";
+      } else if (score >= 60) {
+        interpretation = "⚠️ Fair - Needs Optimization";
+        colorClass = "text-yellow-400";
+      } else if (score >= 40) {
+        interpretation = "❌ Poor - Major Improvements Required";
+        colorClass = "text-orange-400";
+      } else {
+        interpretation = "🚫 Very Poor - Complete Overhaul Needed";
+        colorClass = "text-red-400";
+      }
+      
+      interpretationElement.innerHTML = `<span class="${colorClass}">${interpretation}</span>`;
+    }
+
+    function updateKeywordSection(elementId, keywords, className) {
+      const element = document.getElementById(elementId);
+      if (keywords && keywords.length > 0) {
+        element.innerHTML = keywords.map(keyword => 
+          `<span class="${className} px-3 py-1 rounded-full text-sm">${keyword}</span>`
+        ).join('');
+      } else {
+        element.innerHTML = '<div class="text-muted">No items found</div>';
+      }
+    }
+
+    function updateRecommendations(recommendations) {
+      const element = document.getElementById("recommendations");
+      if (recommendations && recommendations.length > 0) {
+        element.innerHTML = recommendations.map(rec => 
+          `<div class="flex items-start gap-2">
+            <span class="text-blue-400 mt-1">•</span>
+            <span class="text-gray-300">${rec}</span>
+          </div>`
+        ).join('');
+      } else {
+        element.innerHTML = '<div class="text-muted">No recommendations available</div>';
+      }
+    }
+
+    function showEmptyState() {
+      document.getElementById("scoreDisplay").textContent = "--";
+      document.getElementById("scoreSummary").textContent = 
+        "Upload a resume and run ATS analysis to see your results here.";
+      
+      // Reset horizontal meter to starting position
+      document.getElementById("horizontalProgress").style.width = "0%";
+      document.getElementById("horizontalMarker").style.left = "0%";
+      document.getElementById("scoreInterpretation").innerHTML = 
+        '<span class="muted">Awaiting Analysis</span>';
+    }
+
+    function exportResults() {
+      const atsData = localStorage.getItem("ats_analysis");
+      if (atsData) {
+        const analysis = JSON.parse(atsData);
+        const exportData = {
+          timestamp: new Date().toISOString(),
+          ats_score: analysis.ats_score,
+          summary: analysis.summary,
+          keyword_matches: analysis.keyword_matches,
+          missing_keywords: analysis.missing_keywords,
+          skills_gap: analysis.skills_gap,
+          recommendations: analysis.recommendations
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], 
+          { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ats-analysis-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert("No analysis data to export. Please run an ATS analysis first.");
+      }
+    }
+  </script>
+
+  <!-- Particles init: neon palette -->
+  <script>
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 300, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.28, random: false },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
+        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
+        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+      },
+      retina_detect: true
+    });
+
+    // reduce particle count on small screens for performance
+    if (window.innerWidth < 700) {
+      try {
+        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
+        if (p) p.particles.number.value = 50;
+      } catch (e) { /* silent */ }
+    }
+  </script>
+
+</body>
+</html>

