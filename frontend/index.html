@@ -3,289 +3,437 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resume Analyzer</title>
+  <title>GrowPath AI — AI Resume Analysis, Job Matching & Career Assistant</title>
   <link rel="stylesheet" href="/frontend/style.css" />
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Particles.js for dynamic background -->
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <style>
     :root{
-      --bg-dark: #0b0b0e;
-      --glass-weak: rgba(255,255,255,0.06);
-      --glass-strong: rgba(255,255,255,0.10);
+      --bg-dark: #08080c;
+      --glass-weak: rgba(255,255,255,0.04);
+      --glass-strong: rgba(255,255,255,0.08);
       --accent: #ff8c00;
-      --muted: #9aa4b2;
+      --accent-glow: rgba(255, 140, 0, 0.4);
+      --muted: #94a3b8;
     }
 
-    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg-dark);
+      color:#e2e8f0;
+      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      overflow-x:hidden;
+    }
 
-    /* Gradient overlay for depth */
+    h1, h2, h3, h4, .brand-font {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+
+    /* Gradient overlay for atmosphere */
     .gradient-overlay{
       position:fixed;inset:0;z-index:1;pointer-events:none;
-      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
-      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
-    }
-    @keyframes overlayShift{
-      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+      background: radial-gradient(circle at 20% 15%, rgba(255, 140, 0, 0.08), transparent 45%),
+                  radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.06), transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.04), transparent 60%);
     }
 
-    /* Particles container sits behind everything */
-    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.65;}
 
-    /* Glass panels */
-    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
-    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+    .glass { background: rgba(18, 18, 26, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.07); }
+    .glass-strong { background: rgba(26, 26, 38, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
+    .glass-light { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
 
-    /* Small helpers */
-    .accent { color: var(--accent); }
-    .muted { color: var(--muted); }
+    .accent-gradient {
+      background: linear-gradient(135deg, #ff8c00 0%, #ff5e36 50%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-    /* make sure your content sits above backgrounds */
-    .page-content { position: relative; z-index: 10; }
+    .accent-btn {
+      background: linear-gradient(135deg, #ff8c00 0%, #f97316 100%);
+      box-shadow: 0 4px 20px rgba(255, 140, 0, 0.35);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .accent-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 140, 0, 0.5);
+    }
 
-    /* Responsive - reduce particles effect on mobile */
-    @media (max-width:700px){ #particles-js{opacity:0.8} }
-
-    /* tiny card hover lift */
     .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
-    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
-    
-#jobsContainer a,
-#jobsContainer button {
-  position: relative !important;
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-}
+    .lift:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
 
-#jobsContainer * {
-  pointer-events: auto !important;
-}
-
+    .page-content { position: relative; z-index: 10; }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col text-gray-200">
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-black">
 
   <!-- Background layers -->
   <div id="particles-js" aria-hidden="true"></div>
   <div class="gradient-overlay" aria-hidden="true"></div>
 
-  <div class="page-content">
+  <div class="page-content flex flex-col min-h-screen">
+    
     <!-- Navbar -->
-  <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-5xl mx-auto">
-
-
-
-
-      <div class="max-w-7xl mx-auto flex items-center justify-between py-0.1 px-6">
-        <div class="flex items-center gap-3 ">
-          <img src="/frontend/logo4.png" alt="Logo" class="h-14 w-auto rounded" />
-          <div>
-            <div class="text-sm font-semibold accent">Resume Analyzer</div>
-            <div class="text-xs muted">Smart · Fast · Accessible</div>
+    <header class="glass sticky top-4 z-50 mt-4 rounded-3xl shadow-2xl max-w-6xl mx-4 lg:mx-auto border border-white/10">
+      <div class="flex items-center justify-between px-6 py-3">
+        
+        <!-- Brand Logo -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 p-0.5 shadow-lg shadow-orange-500/30 flex items-center justify-center">
+            <div class="w-full h-full bg-[#0d0d12] rounded-[14px] flex items-center justify-center">
+              <span class="text-xl font-black text-orange-400">G</span>
+            </div>
           </div>
-        </div>
+          <div>
+            <div class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+              GrowPath <span class="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold">AI 2.0</span>
+            </div>
+            <div class="text-[11px] text-gray-400">Smart Career Platform</div>
+          </div>
+        </a>
 
-        <nav class="hidden md:block">
-          <ul class="flex gap-6 text-slate-200">
-            <li><a href="#resume" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full"">Resume</a></li>
-            <li><a href="#demo" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">Demo</a></li>
-            <li><a href="#how" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">How it Works</a></li>
-            <li><a href="#tips" class="relative after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-orange-400 after:transition-all after:duration-300 hover:after:w-full">Tips</a></li>
-             <li class="relative group">
-
-  <!-- Main Button with Same Underline Effect -->
-  <li class="relative group">
-
-  <!-- ATS Tools Button (matching other navbar items) -->
-  <button
-    class="relative text-white-700 px-1
-           after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0
-           after:bg-orange-400 after:transition-all after:duration-300
-           hover:text-orange-500 hover:after:w-full">
-    ATS Tools ▾
-  </button>
-
-  <!-- Dropdown -->
-  <ul class="absolute hidden group-hover:block 
-             bg-white shadow-lg rounded-lg py-2 w-40 z-50">
-    <li>
-      <a href="/frontend/ats.html"
-         class="block px-4 py-2 text-black 
-                hover:bg-orange-100 hover:text-orange-600">
-        ATS Score
-      </a>
-    </li>
-    <li>
-      <a href="/frontend/dashboard.html"
-         class="block px-4 py-2 text-black 
-                hover:bg-orange-100 hover:text-orange-600">
-        Dashboard
-      </a>
-    </li>
-  </ul>
-</li>
-
-          </ul>
+        <!-- Nav Links -->
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+          <a href="#resume" class="hover:text-orange-400 transition">Resume Parser</a>
+          <a href="/ats" class="hover:text-orange-400 transition">ATS Matcher</a>
+          <a href="/dashboard" class="hover:text-orange-400 transition">Career Dashboard</a>
+          <a href="#how" class="hover:text-orange-400 transition">How It Works</a>
+          <a href="#tips" class="hover:text-orange-400 transition">Pro Tips</a>
         </nav>
+
+        <!-- CTA Header Button -->
+        <div class="flex items-center gap-3">
+          <a href="/dashboard" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white glass hover:bg-white/10 rounded-xl border border-white/15 transition">
+            <span>⚡ Open Dashboard</span>
+          </a>
+          <a href="#resume" class="px-4 py-2 text-xs font-bold text-black accent-btn rounded-xl">
+            Upload Resume
+          </a>
+        </div>
       </div>
     </header>
 
-    <!-- Upload Section -->
-<section id="resume" class="px-6 py-20 max-w-6xl mx-auto">
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-
-    <!-- LEFT: Upload box + Boost box -->
-    <div class="lg:col-span-2 flex flex-col gap-10">
+    <!-- HERO & UPLOAD SECTION -->
+    <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-12 lg:py-16 w-full">
       
-      <!-- your existing upload card -->
-      <div class="max-w-md w-full glass rounded-3xl shadow-2xl p-10 text-center lift">
-        <!-- NOTHING CHANGED INSIDE -->
-        <h2 class="text-2xl font-semibold mb-6">📄 Upload Your Resume</h2>
-        <input type="file" id="resumeInput" accept=".pdf"
-          class="w-full border border-transparent rounded-lg p-2 text-sm mb-6 bg-transparent text-slate-100
-          file:mr-4 file:rounded-full file:border-0 file:bg-amber-50/10 file:px-4 file:py-2
-          file:text-sm file:font-semibold file:text-amber-300 hover:file:bg-amber-50/12" />
-        <button id="analyzeBtn" onclick="uploadResume()"
-          class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md">
-          Analyze
-        </button>
-        <ul id="resultList" class="mt-6 text-left text-slate-200"></ul>
+      <!-- Hero Tagline -->
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass border border-orange-500/30 text-xs font-semibold text-orange-300 mb-6 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          AI-Powered Resume Analysis & Job Matching Engine
+        </div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] mb-6">
+          Transform Your Resume into a <span class="accent-gradient">High-Growth Career</span>
+        </h1>
+        <p class="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          Deterministic ATS scoring, multi-category skill extraction, live job openings via JSearch, and AI-driven interview preparation.
+        </p>
       </div>
 
-      <!-- your existing Boost card -->
-      <div class="max-w-md w-full glass  rounded-3xl p-8 shadow-lg lift">
-        <h3 class="text-2xl font-semibold accent mb-4">Boost Your Resume With AI</h3>
-        <p class="muted leading-relaxed">Upload your resume to instantly discover how to make it stand out...</p>
-        <ul class="mt-4 list-disc list-inside muted">
-          <li>ATS Compatibility Report</li>
-          <li>Keyword Optimization</li>
-          <li>Formatting & Readability Tips</li>
-        </ul>
+      <!-- Main Interaction Grid -->
+      <div id="resume" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <!-- LEFT 2 COLS: Upload Box & Instant Insights -->
+        <div class="lg:col-span-2 space-y-8">
+          
+          <!-- Dropzone Card -->
+          <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/15 lift">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                  <span>📄</span> Upload & Analyze Resume
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">Supports PDF & DOCX formats (Up to 10MB)</p>
+              </div>
+              <button onclick="loadSampleResume()" class="text-xs px-3 py-1.5 glass hover:bg-orange-500/20 text-orange-300 rounded-xl border border-orange-500/30 font-medium transition">
+                ⚡ Try Sample Resume
+              </button>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div id="dropZone" class="border-2 border-dashed border-white/20 hover:border-orange-500/60 rounded-2xl p-8 text-center transition-all bg-white/[0.02] cursor-pointer relative">
+              <input type="file" id="resumeInput" accept=".pdf,.docx,.doc,.txt" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+              <div class="space-y-3 pointer-events-none">
+                <div class="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-orange-400 mx-auto flex items-center justify-center text-2xl">
+                  ☁
+                </div>
+                <div class="text-sm font-semibold text-gray-200">
+                  Drag and drop your resume here, or <span class="text-orange-400 underline">browse files</span>
+                </div>
+                <div class="text-xs text-gray-400">PDF, DOCX, or DOC (Clean text extraction)</div>
+              </div>
+            </div>
+
+            <!-- Selected File Indicator -->
+            <div id="selectedFileName" class="hidden mt-4 p-3 glass rounded-xl text-xs text-emerald-300 border border-emerald-500/30"></div>
+
+            <!-- Action Button -->
+            <div class="mt-6 flex flex-col sm:flex-row items-center gap-4">
+              <button id="analyzeBtn" onclick="uploadResume()" class="w-full sm:w-auto flex-1 py-3.5 px-6 accent-btn text-black font-bold text-sm rounded-xl shadow-lg flex items-center justify-center gap-2">
+                🚀 Analyze Resume
+              </button>
+              <a href="/ats" class="w-full sm:w-auto py-3.5 px-6 glass hover:bg-white/10 text-white font-semibold text-sm rounded-xl border border-white/15 text-center transition">
+                🎯 Match Job Description
+              </a>
+            </div>
+
+            <!-- Status Indicator -->
+            <div id="uploadStatus" class="hidden mt-6"></div>
+          </div>
+
+          <!-- Upload Result Preview Card (Dynamically populated) -->
+          <div id="uploadResultsCard" class="hidden glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-orange-500/30 space-y-6">
+            
+            <!-- Result Top Bar -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+              <div>
+                <span class="text-[11px] uppercase tracking-widest text-orange-400 font-bold">Analysis Overview</span>
+                <h3 id="resCandidateName" class="text-2xl font-bold text-white mt-1">Candidate Profile</h3>
+                <p id="resCandidateEmail" class="text-xs text-gray-400">email@example.com</p>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <div class="text-xs text-gray-400 uppercase">Overall ATS Score</div>
+                  <div id="resOverallScore" class="text-3xl font-black text-orange-400">--</div>
+                </div>
+                <span id="resScoreBadge" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  ATS Ready
+                </span>
+              </div>
+            </div>
+
+            <!-- Verdict Note -->
+            <div class="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
+              <div class="text-xs font-bold text-orange-400 mb-1">📋 ATS Assessment:</div>
+              <p id="resVerdict" class="text-xs text-gray-200 leading-relaxed font-medium">Evaluation complete.</p>
+            </div>
+
+            <!-- Extracted Skills Badges -->
+            <div>
+              <h4 class="text-sm font-semibold text-gray-200 mb-3 flex items-center justify-between">
+                <span>🧠 Detected Technical & Domain Skills</span>
+                <span class="text-xs text-orange-400 font-normal">Standardized Taxonomy</span>
+              </h4>
+              <div id="resSkillsContainer" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Suggested Roles -->
+            <div>
+              <h4 class="text-sm font-semibold text-gray-200 mb-3">💼 Suggested Career Roles</h4>
+              <div id="resSuggestedRoles" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- CTA into Full Dashboard -->
+            <div class="pt-4 border-t border-white/10 flex flex-wrap gap-4 items-center justify-between">
+              <a href="/dashboard" class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-400 text-black font-bold text-xs rounded-xl hover:brightness-110 transition shadow">
+                📊 Open Full GrowPath Dashboard →
+              </a>
+              <a href="/ats" class="text-xs text-orange-400 hover:text-orange-300 font-semibold underline">
+                Tailor Resume for Specific Job Description →
+              </a>
+            </div>
+          </div>
+
+          <!-- Feature Highlights Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="glass p-5 rounded-2xl border border-white/10 lift">
+              <div class="text-2xl mb-2">🎯</div>
+              <h4 class="text-sm font-bold text-white mb-1">Deterministic ATS</h4>
+              <p class="text-xs text-gray-400 leading-relaxed">No random scores. Verified against contact completeness, section headers, metrics, and verbs.</p>
+            </div>
+            <div class="glass p-5 rounded-2xl border border-white/10 lift">
+              <div class="text-2xl mb-2">💼</div>
+              <h4 class="text-sm font-bold text-white mb-1">Live Job Pipeline</h4>
+              <p class="text-xs text-gray-400 leading-relaxed">Real job opportunities fetched live based on candidate tech stack.</p>
+            </div>
+            <div class="glass p-5 rounded-2xl border border-white/10 lift">
+              <div class="text-2xl mb-2">🎙</div>
+              <h4 class="text-sm font-bold text-white mb-1">AI Interview Prep</h4>
+              <p class="text-xs text-gray-400 leading-relaxed">Custom technical questions and STAR behavioral frameworks tailored to your actual resume.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COL: Live Job Recommendations Sidebar -->
+        <aside class="lg:col-span-1 space-y-6">
+          <div class="glass-strong rounded-3xl p-6 shadow-2xl border border-white/15 sticky top-24 max-h-[85vh] overflow-y-auto">
+            
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span>🔴</span> Live Job Matches
+              </h3>
+              <span class="text-[10px] px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded font-semibold border border-orange-500/30">Verified</span>
+            </div>
+
+            <!-- Country Filter Pills -->
+            <div class="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 text-xs">
+              <button data-job-country="IN" onclick="fetchJobsForCountry('IN')" class="job-country-pill px-2.5 py-1 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 font-medium hover:bg-orange-500/30 transition">
+                🇮🇳 India
+              </button>
+              <button data-job-country="US" onclick="fetchJobsForCountry('US')" class="job-country-pill px-2.5 py-1 rounded-lg glass hover:bg-white/10 text-gray-300 transition">
+                🇺🇸 US
+              </button>
+              <button data-job-country="GB" onclick="fetchJobsForCountry('GB')" class="job-country-pill px-2.5 py-1 rounded-lg glass hover:bg-white/10 text-gray-300 transition">
+                🇬🇧 UK
+              </button>
+              <button data-job-country="GLOBAL" onclick="fetchJobsForCountry('GLOBAL')" class="job-country-pill px-2.5 py-1 rounded-lg glass hover:bg-white/10 text-gray-300 transition">
+                🌐 Remote
+              </button>
+            </div>
+
+            <!-- Quick Search -->
+            <div class="flex items-center gap-2 mb-4">
+              <input type="text" id="sidebarJobSearchInput" placeholder="Filter role (e.g. React)..." class="flex-1 bg-black/40 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition" onkeydown="if(event.key==='Enter') searchCustomJobs()" />
+              <button onclick="searchCustomJobs()" class="px-2.5 py-1.5 bg-orange-500 text-black font-bold text-xs rounded-lg hover:bg-orange-400 transition shrink-0">
+                🔍
+              </button>
+            </div>
+
+            <p class="text-xs text-gray-400 mb-4">Verified active openings matching your technical skill profile.</p>
+
+            <!-- Jobs List Container -->
+            <div id="jobsContainer" class="space-y-4">
+              <div class="p-6 glass rounded-2xl text-center text-xs text-gray-400 border border-white/5">
+                Upload your resume above or search above to discover live job openings.
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
       </div>
 
-    </div>
+      <!-- Demo Video Section -->
+      <section id="demo" class="py-20">
+        <div class="max-w-4xl mx-auto text-center">
+          <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">Platform Preview</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-2 mb-4">See GrowPath AI in Action</h2>
+          <p class="text-sm text-gray-400 max-w-xl mx-auto mb-8">Hover to watch how GrowPath AI parses resumes, evaluates ATS compatibility, and accelerates your career search.</p>
 
-    <!-- RIGHT: Recommended Jobs stays same, only moved -->
-    <aside class="lg:col-span-1">
-      <div class="w-full glass  rounded-3xl p-6 shadow-lg lift sticky top-24 max-h-[75vh] overflow-auto">
-        <h2 class="text-2xl font-semibold accent mb-6">🔍 Recommended Jobs</h2>
-        <p class="muted mb-4 text-sm ">Based on your resume analysis, here are the top job roles you might fit into.</p>
-        <div id="jobsContainer" class="grid gap-6">
-          <!-- Your JS will fill this -->
+          <div class="relative group mx-auto max-w-3xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/15">
+            <video id="demoVideo" muted loop preload="none" poster="/frontend/thumbnail.jpg" class="w-full h-full object-cover rounded-3xl transition-transform duration-500 group-hover:scale-105">
+              <source src="/frontend/demo.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section id="how" class="py-16 border-t border-white/10">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+          <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">End-To-End Architecture</span>
+          <h2 class="text-3xl font-bold text-white mt-2">How GrowPath AI Powers Your Career</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-500/30 text-orange-400 flex items-center justify-center font-bold mb-4">1</div>
+            <h3 class="text-base font-bold text-white mb-2">Upload & Multi-Format Parsing</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">PDF & DOCX parsing extracts contact links, education, work experience, projects, and categorizes skills across 9 domains.</p>
+          </div>
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="w-10 h-10 rounded-2xl bg-pink-500/20 border border-pink-500/30 text-pink-400 flex items-center justify-center font-bold mb-4">2</div>
+            <h3 class="text-base font-bold text-white mb-2">Deterministic ATS Scoring</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">Evaluates impact metrics, power verbs, keyword density, section headers, and formatting to output an objective 0-100 score.</p>
+          </div>
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center font-bold mb-4">3</div>
+            <h3 class="text-base font-bold text-white mb-2">Live Jobs & Interview Prep</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">Applies skill filters for live job listings via JSearch and generates tailored STAR interview questions for target roles.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pro Tips Section -->
+      <section id="tips" class="py-16 border-t border-white/10">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+          <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">Recruiter Insights</span>
+          <h2 class="text-3xl font-bold text-white mt-2">Expert Guidelines for 90+ ATS Score</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="text-2xl mb-2">📊</div>
+            <h4 class="text-sm font-bold text-white mb-1">Quantify Every Impact</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Use percentages, dollar amounts, scale (e.g. 50k users, 45% latency drop) to prove measurable value.</p>
+          </div>
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="text-2xl mb-2">⚡</div>
+            <h4 class="text-sm font-bold text-white mb-1">Lead With Power Verbs</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Start bullets with 'Architected', 'Spearheaded', 'Engineered' instead of passive phrases like 'worked on'.</p>
+          </div>
+          <div class="glass p-6 rounded-3xl border border-white/10 lift">
+            <div class="text-2xl mb-2">🎯</div>
+            <h4 class="text-sm font-bold text-white mb-1">Match Exact Keywords</h4>
+            <p class="text-xs text-gray-400 leading-relaxed">Ensure core technologies and concepts listed in the Job Description appear organically in your experience.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass mt-auto py-8 border-t border-white/10">
+      <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+        <div>© 2026 <strong>GrowPath AI</strong>. All rights reserved.</div>
+        <div class="flex items-center gap-6">
+          <a href="/ats" class="hover:text-orange-400 transition">ATS Matcher</a>
+          <a href="/dashboard" class="hover:text-orange-400 transition">Career Dashboard</a>
+          <a href="#resume" class="hover:text-orange-400 transition">Upload Resume</a>
         </div>
       </div>
-    </aside>
+    </footer>
 
   </div>
-</section>
 
-      </div>
-    </section>
-
-    <!-- Demo Video Section -->
-    <section id="demo" class="py-24">
-      <div class="max-w-5xl mx-auto px-6 text-center">
-        <h2 class="text-3xl font-bold accent mb-6">🎥 Demo in Action</h2>
-        <p class="muted mb-8 max-w-2xl mx-auto">Hover over the video to watch how the Resume Analyzer works. Instantly see how AI evaluates and enhances your resume for maximum impact.</p>
-
-        <div class="relative group mx-auto max-w-3xl aspect-video rounded-3xl overflow-hidden shadow-2xl">
-          <video id="demoVideo" muted loop preload="none" poster="/frontend/thumbnail.jpg"
-            class="w-full h-full object-cover rounded-3xl transition-transform duration-300 group-hover:scale-105">
-            <source src="/frontend/demo.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section id="how" class="py-20">
-      <div class="max-w-6xl mx-auto text-center px-6">
-        <h2 class="text-3xl font-bold accent mb-8">How It Works</h2>
-        <div class="grid md:grid-cols-3 gap-8">
-          <div class="p-6 glass rounded-2xl shadow lift">
-            <h3 class="text-xl font-semibold mb-3">1️⃣ Upload Your Resume</h3>
-            <p class="muted">Choose your resume in PDF format and upload it in seconds.</p>
-          </div>
-          <div class="p-6 glass rounded-2xl shadow lift">
-            <h3 class="text-xl font-semibold mb-3">2️⃣ AI Review</h3>
-            <p class="muted">Our AI checks for structure, keywords, and ATS optimization.</p>
-          </div>
-          <div class="p-6 glass rounded-2xl shadow lift">
-            <h3 class="text-xl font-semibold mb-3">3️⃣ Get Instant Insights</h3>
-            <p class="muted">Receive detailed suggestions to make your resume job-ready.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tips Section -->
-    <section id="tips" class="py-20">
-      <div class="max-w-5xl mx-auto px-6 text-center">
-        <h2 class="text-3xl font-bold accent mb-8">Pro Tips to Improve Your Resume</h2>
-        <div class="space-y-8">
-          <div class="p-6 glass rounded-3xl shadow-md lift">
-            <h4 class="text-xl font-semibold mb-2">✅ Keep It Concise</h4>
-            <p class="muted">Recruiters spend only a few seconds scanning — keep your resume focused and clear.</p>
-          </div>
-          <div class="p-6 glass rounded-3xl shadow-md lift">
-            <h4 class="text-xl font-semibold mb-2">🎯 Use Relevant Keywords</h4>
-            <p class="muted">Match your skills and experience with job-specific keywords to pass ATS filters.</p>
-          </div>
-          <div class="p-6 glass rounded-3xl shadow-md lift">
-            <h4 class="text-xl font-semibold mb-2">📊 Show Achievements</h4>
-            <p class="muted">Quantify your results — “Reduced costs by 25%” or “Led 10-member team”.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="text-center py-6 muted">© 2025 Resume Analyzer | Designed with ❤️ and Orange</footer>
+  <!-- Roadmap Modal -->
+  <div id="roadmapModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="roadmapModalContent" class="glass-strong rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-orange-500/40 shadow-2xl max-h-[90vh] overflow-y-auto"></div>
   </div>
 
-  <!-- Hover-to-play video effect -->
+  <!-- Hover Video Player -->
   <script>
-   document.addEventListener("DOMContentLoaded", () => {
-    const video = document.getElementById("demoVideo");
-    if (video) {
-      video.addEventListener("mouseenter", () => video.play());
-      video.addEventListener("mouseleave", () => video.pause());
-    }
-  });
+    document.addEventListener("DOMContentLoaded", () => {
+      const video = document.getElementById("demoVideo");
+      if (video) {
+        video.addEventListener("mouseenter", () => video.play());
+        video.addEventListener("mouseleave", () => video.pause());
+      }
+    });
   </script>
 
-  <!-- Particles init: neon palette -->
+  <!-- Particles init -->
   <script>
     particlesJS("particles-js", {
       particles: {
-        number: { value: 300, density: { enable: true, value_area: 800 } },
-        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        number: { value: 160, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff5e36", "#00e5ff"] },
         shape: { type: "circle" },
-        opacity: { value: 0.28, random: false },
-        size: { value: 3, random: true },
-        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
-        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
+        opacity: { value: 0.25, random: true },
+        size: { value: 2.5, random: true },
+        line_linked: { enable: true, distance: 130, color: "#ff8c00", opacity: 0.08, width: 1.5 },
+        move: { enable: true, speed: 1.2, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
       },
       interactivity: {
         detect_on: "canvas",
         events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
-        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+        modes: { grab: { distance: 130, line_linked: { opacity: 0.5 } } }
       },
       retina_detect: true
     });
-
-    // reduce particle count on small screens for performance
-    if (window.innerWidth < 700) {
-      try {
-        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
-        if (p) p.particles.number.value = 50;
-      } catch (e) { /* silent */ }
-    }
   </script>
 
-  <script defer src="/frontend/script.js"></script>
+  <script src="/frontend/script.js"></script>
 </body>
 </html>

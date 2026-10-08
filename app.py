@@ -1,289 +1,405 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from PyPDF2 import PdfReader
-from dotenv import load_dotenv
-load_dotenv()
 import os
-import traceback
-import json
 import re
-import requests
+import json
+import traceback
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
+load_dotenv()
 
-app = FastAPI()
+from services.resume_parser import ResumeParser
+from services.skill_extractor import SkillExtractor
+from services.ats_analyzer import ATSAnalyzer
+from services.job_matcher import JobMatcher
+from services.job_service import JobService
+from services.ai_assistant import AIAssistant
 
-# === Configure APIs ===
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
-PPLX_URL = "https://api.perplexity.ai/chat/completions"
+app = FastAPI(
+    title="GrowPath AI",
+    description="AI Resume Analysis, Job Matching & Career Assistant API",
+    version="2.0.0"
+)
 
-THEIRSTACK_API_KEY =os.getenv("THEIRSTACK_API_KEY")
-# === Skills List ===
-skills = ["Python", "Java", "C++", "JavaScript", "React", "Django", "Flask"]
+# Enable CORS for flexibility
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# === Paths ===
-BASE_DIR = os.path.dirname(__file__)
+# Paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-# === Serve static files ===
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+# Serve static frontend files
+app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
-# === Serve HTML at "/" ===
+
+# =====================================================================
+# HTML Navigation Routes
+# =====================================================================
 @app.get("/", response_class=HTMLResponse)
-async def serve_frontend():
-    html_path = os.path.join(FRONTEND_DIR, "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read(), status_code=200)
+async def serve_index():
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_file):
+        with open(index_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    return HTMLResponse("<h1>GrowPath AI Frontend Loading...</h1>", status_code=200)
+
+@app.get("/ats", response_class=HTMLResponse)
+async def serve_ats():
+    ats_file = os.path.join(FRONTEND_DIR, "ats.html")
+    if os.path.exists(ats_file):
+        with open(ats_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    return HTMLResponse("<h1>ATS Checker Page</h1>", status_code=200)
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def serve_dashboard():
+    dash_file = os.path.join(FRONTEND_DIR, "dashboard.html")
+    if os.path.exists(dash_file):
+        with open(dash_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    return HTMLResponse("<h1>Dashboard Page</h1>", status_code=200)
 
 
-# <------------------------ TheirStack ---------------------------->
-def fetch_jobs_from_theirstack(role, skills, limit=3):
-    url = "https://api.theirstack.com/v1/jobs/search"
-    headers = {
-        "Authorization": f"Bearer {THEIRSTACK_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    clean_role = re.sub(r"[^a-zA-Z\s]", "", role).strip()
-
-    payload = {
-        "page": 0,
-        "limit": limit,
-        "job_title_or": [clean_role],
-        "job_country_code_or": ["IN"],
-        "posted_at_max_age_days": 15,
-    }
-
-    if skills:
-        payload["job_technology_slug_or"] = [s.lower() for s in skills]
-
+# =====================================================================
+# 1. RESUME UPLOAD & COMPREHENSIVE PARSE (PDF & DOCX)
+# =====================================================================
+@app.post("/api/upload_and_parse")
+async def upload_and_parse_resume(file: UploadFile = File(...)):
+    """
+    Validates file (PDF/DOCX), extracts text, contact info, sections,
+    categorized skills, deterministic ATS scores, and suggested roles.
+    """
     try:
-        print(f"🔍 Fetching jobs for role: {clean_role}")
-        resp = requests.post(url, json=payload, headers=headers)
-        print("📤 Sent payload:", payload)
-        print("📡 Response code:", resp.status_code)
+        content = await file.read()
+        filename = file.filename or "uploaded_resume.pdf"
 
-        resp.raise_for_status()
-        data = resp.json()
-        print("----------------------", data)
+        # 1. Parse file structure & text
+        parsed_data = ResumeParser.parse_file(content, filename)
 
-        jobs = []
-        for j in data.get("data", []):
-            jobs.append({
-                "title": j.get("job_title"),
-                "company": (
-                    j.get("company", {}).get("name")
-                    if isinstance(j.get("company"), dict)
-                    else j.get("company")
-                ),
-                "link": j.get("final_url") or j.get("url"),
-                "location": j.get("location"),
-                "salary": j.get("salary_string")
-            })
+        # 2. Extract categorized skills
+        extracted_skills = SkillExtractor.extract_skills(parsed_data["raw_text"])
 
-        print(f"✅ Found {len(jobs)} jobs from TheirStack")
-        return jobs
+        # 3. Deterministic ATS Analysis
+        ats_result = ATSAnalyzer.analyze(parsed_data, extracted_skills)
 
-    except requests.exceptions.HTTPError as e:
-        print("❌ TheirStack HTTP Error:", e.response.text)
-        return []
+        # 4. Generate role suggestions
+        suggested_roles = AIAssistant.suggest_job_roles(
+            parsed_data["raw_text"],
+            extracted_skills["all_skills"]
+        )
+
+        # 5. Fetch Initial Live Jobs via JSearch
+        role_titles = [r["title"] if isinstance(r, dict) else str(r) for r in suggested_roles[:2]]
+        live_jobs = JobService.fetch_live_jobs(
+            roles=role_titles or ["Software Engineer"],
+            skills=extracted_skills["all_skills"],
+            country_code="IN",
+            limit_per_role=3
+        )
+
+        return JSONResponse({
+            "success": True,
+            "parsed_resume": parsed_data,
+            "extracted_skills": extracted_skills,
+            "ats_analysis": ats_result,
+            "suggested_roles": suggested_roles,
+            "live_jobs": live_jobs
+        })
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
     except Exception as e:
-        print("❌ TheirStack API error:")
+        print(f"[GrowPath API] Error parsing resume: {str(e)}")
         traceback.print_exc()
-        return []
+        return JSONResponse({"success": False, "error": f"Failed to process resume: {str(e)}"}, status_code=500)
 
 
-# === ATS Score calculation route ===
+# =====================================================================
+# 2. JOB DESCRIPTION MATCHING & SKILL GAP ANALYSIS
+# =====================================================================
+@app.post("/api/match_job")
+async def match_job_description(payload: Dict[str, Any] = Body(...)):
+    """
+    Compares resume text & skills against a target Job Description.
+    """
+    try:
+        resume_text = payload.get("resume_text", "").strip()
+        job_description = payload.get("job_description", "").strip()
+        skills = payload.get("skills", [])
+
+        if not resume_text:
+            return JSONResponse({"success": False, "error": "Resume text is required."}, status_code=400)
+        if not job_description:
+            return JSONResponse({"success": False, "error": "Job description is required."}, status_code=400)
+
+        # If skills list wasn't provided, extract on the fly
+        if not skills:
+            skills = SkillExtractor.extract_skills(resume_text).get("all_skills", [])
+
+        match_result = JobMatcher.match(resume_text, skills, job_description)
+
+        return JSONResponse({
+            "success": True,
+            "match_result": match_result
+        })
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+    except Exception as e:
+        print(f"[GrowPath API] Error matching JD: {str(e)}")
+        traceback.print_exc()
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@app.post("/api/upload_jd")
+async def upload_job_description(file: UploadFile = File(...)):
+    """
+    Uploads and extracts plain text from a Job Description file (PDF, DOCX, TXT).
+    """
+    try:
+        content = await file.read()
+        filename = file.filename or "job_description.pdf"
+
+        # Validate file size (10 MB)
+        if len(content) > 10 * 1024 * 1024:
+            return JSONResponse({
+                "success": False,
+                "error": "Job Description file is too large. Please upload a file smaller than 10 MB."
+            }, status_code=400)
+
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in [".pdf", ".docx", ".doc", ".txt"]:
+            return JSONResponse({
+                "success": False,
+                "error": f"Unsupported file format '{ext}'. Please upload a PDF, DOCX, or TXT file."
+            }, status_code=400)
+
+        extracted_text = ResumeParser.extract_text(content, filename)
+
+        return JSONResponse({
+            "success": True,
+            "filename": filename,
+            "file_type": ext.lstrip(".").upper(),
+            "text": extracted_text,
+            "word_count": len(extracted_text.split()),
+            "char_count": len(extracted_text)
+        })
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+    except Exception as e:
+        print(f"[GrowPath API] Error uploading JD: {str(e)}")
+        traceback.print_exc()
+        return JSONResponse({"success": False, "error": f"Failed to extract text from document: {str(e)}"}, status_code=500)
+
+
+# =====================================================================
+# 3. LIVE JOB RECOMMENDATIONS (JSEARCH VIA RAPIDAPI)
+# =====================================================================
+@app.post("/api/recommend_jobs")
+async def recommend_jobs_api(payload: Dict[str, Any] = Body(...)):
+    """
+    Queries live jobs based on roles, skills, and target country via JSearch API.
+    """
+    try:
+        roles = payload.get("roles", ["Software Engineer"])
+        skills = payload.get("skills", [])
+        country_code = payload.get("country_code", "IN")
+        limit = int(payload.get("limit", 4))
+
+        if isinstance(roles, str):
+            roles = [roles]
+
+        jobs = JobService.fetch_live_jobs(
+            roles=roles,
+            skills=skills,
+            country_code=country_code,
+            limit_per_role=limit
+        )
+
+        return JSONResponse({
+            "success": True,
+            "count": len(jobs),
+            "jobs": jobs
+        })
+    except Exception as e:
+        print(f"[GrowPath API] Error in recommend_jobs_api: {type(e).__name__} - {str(e)}")
+        return JSONResponse({
+            "success": False,
+            "error": "Job search service is temporarily unavailable."
+        }, status_code=500)
+
+
+
+# =====================================================================
+# 4. AI RESUME BULLET OPTIMIZER (STAR METHOD)
+# =====================================================================
+@app.post("/api/improve_bullet")
+async def improve_bullet_api(payload: Dict[str, Any] = Body(...)):
+    """
+    Rewrites a weak resume bullet point into high-impact STAR metrics.
+    """
+    try:
+        bullet_text = payload.get("bullet_text", "").strip()
+        target_role = payload.get("target_role", "Software Engineer").strip()
+
+        if not bullet_text:
+            return JSONResponse({"success": False, "error": "Bullet point text is required."}, status_code=400)
+
+        result = AIAssistant.improve_bullet_point(bullet_text, target_role)
+        return JSONResponse({"success": True, "improvement": result})
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+# =====================================================================
+# 5. AI INTERVIEW PREPARATION GENERATOR
+# =====================================================================
+@app.post("/api/interview_prep")
+async def interview_prep_api(payload: Dict[str, Any] = Body(...)):
+    """
+    Generates customized Technical, Behavioral (STAR), and Project Deep-Dive questions & answers.
+    """
+    try:
+        resume_text = payload.get("resume_text", "").strip()
+        target_role = payload.get("target_role", "Software Engineer").strip()
+        skills = payload.get("skills", [])
+
+        if not resume_text:
+            return JSONResponse({"success": False, "error": "Resume text is required for interview prep."}, status_code=400)
+
+        prep_data = AIAssistant.generate_interview_prep(resume_text, target_role, skills)
+        return JSONResponse({"success": True, "prep": prep_data})
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+# =====================================================================
+# 6. AI 4-WEEK SKILL LEARNING ROADMAP
+# =====================================================================
+@app.post("/api/learning_roadmap")
+async def learning_roadmap_api(payload: Dict[str, Any] = Body(...)):
+    """
+    Generates a 4-week structured skill development roadmap for missing skills.
+    """
+    try:
+        missing_skills = payload.get("missing_skills", [])
+        target_role = payload.get("target_role", "Software Engineer").strip()
+        job_description = payload.get("job_description", "")
+
+        if not missing_skills:
+            return JSONResponse({"success": False, "error": "List of missing skills is required."}, status_code=400)
+
+        roadmap = AIAssistant.generate_learning_roadmap(missing_skills, target_role, job_description)
+        return JSONResponse({"success": True, "roadmap": roadmap})
+
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+# =====================================================================
+# 7. BACKWARD COMPATIBILITY ENDPOINTS (Preserve Existing Functionality)
+# =====================================================================
 @app.post("/calculate_ats_score")
-async def calculate_ats_score(request: dict):
+async def legacy_calculate_ats_score(request: dict):
+    """
+    Legacy ATS score calculation endpoint for backward compatibility with existing frontends.
+    """
     try:
         resume_text = request.get("resume_text", "").strip()
         job_description = request.get("job_description", "").strip()
-        
+
         if not resume_text or not job_description:
             return {"error": "Both resume text and job description are required"}
-        
-        # Create prompt for ATS scoring
-        prompt = f"""
-You are an ATS (Applicant Tracking System) expert. Analyze the resume against the job description and provide a detailed ATS compatibility score.
 
-Resume Text:
-{resume_text}
+        # Extract skills
+        skills_data = SkillExtractor.extract_skills(resume_text)
+        skills_list = skills_data.get("all_skills", [])
 
-Job Description:
-{job_description}
+        # Match with Job Description
+        match_result = JobMatcher.match(resume_text, skills_list, job_description)
 
-Please provide:
-1. Overall ATS Score (0-100)
-2. Keyword Match Analysis
-3. Skills Gap Analysis
-4. Specific Recommendations for improvement
-5. Missing Keywords that should be added
+        # Build comprehensive structure
+        ats_analysis = {
+            "ats_score": match_result["match_score"],
+            "keyword_matches": match_result["matched_keywords"] + match_result["matched_skills"],
+            "missing_keywords": match_result["missing_keywords"] + match_result["missing_skills"],
+            "skills_gap": match_result["missing_skills"],
+            "recommendations": match_result["tailoring_tips"],
+            "summary": f"ATS Compatibility Score: {match_result['match_score']}%. {match_result['fit_level']}."
+        }
 
-Return your analysis in JSON format with the following structure:
-{{
-    "ats_score": <number>,
-    "keyword_matches": ["list of matched keywords"],
-    "missing_keywords": ["list of missing important keywords"],
-    "skills_gap": ["list of missing skills"],
-    "recommendations": ["list of specific recommendations"],
-    "summary": "brief summary of the analysis"
-}}
-"""
-
-        # Call Perplexity API for ATS analysis
-        try:
-            payload = {
-                "model": "sonar-pro",
-                "messages": [
-                    {"role": "system", "content": "You are an expert ATS analyzer. Provide detailed, actionable feedback."},
-                    {"role": "user", "content": prompt}
-                ]
-            }
-
-            headers = {
-                "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-                "Content-Type": "application/json"
-            }
-
-            response = requests.post(PPLX_URL, json=payload, headers=headers)
-            response.raise_for_status()
-
-            model_output = response.json()["choices"][0]["message"]["content"]
-            
-            # Clean JSON response
-            model_output = re.sub(r"^```json|```$", "", model_output, flags=re.IGNORECASE).strip()
-            
-            try:
-                ats_analysis = json.loads(model_output)
-            except:
-                # Fallback if JSON parsing fails
-                ats_analysis = {
-                    "ats_score": 75,
-                    "keyword_matches": ["extracted from analysis"],
-                    "missing_keywords": ["needs improvement"],
-                    "skills_gap": ["various skills"],
-                    "recommendations": ["improve keyword density", "add missing skills"],
-                    "summary": "Analysis completed but formatting needs adjustment",
-                    "raw_output": model_output
-                }
-
-            return {
-                "success": True,
-                "analysis": ats_analysis
-            }
-
-        except Exception as e:
-            print("❌ ATS Analysis API error:")
-            traceback.print_exc()
-            return {"error": f"ATS analysis failed: {str(e)}"}
+        return {
+            "success": True,
+            "analysis": ats_analysis
+        }
 
     except Exception as e:
-        print("❌ ATS Score calculation error:")
+        print(f"[GrowPath API] Error in legacy calculate_ats_score: {str(e)}")
         traceback.print_exc()
         return {"error": str(e)}
 
 
-# === Resume upload route ===
 @app.post("/recommend_jobs")
-async def recommend_jobs(file: UploadFile = File(...)):
+async def legacy_recommend_jobs(file: UploadFile = File(...)):
+    """
+    Legacy resume upload and job recommendation endpoint for backward compatibility.
+    """
     try:
-        # Save uploaded file temporarily
-        temp_path = f"temp_{file.filename}"
-        with open(temp_path, "wb") as f:
-            f.write(await file.read())
+        content = await file.read()
+        filename = file.filename or "resume.pdf"
 
-        # Extract text
-        text = ""
-        reader = PdfReader(temp_path)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text
-        os.remove(temp_path)
+        # Parse file
+        parsed_data = ResumeParser.parse_file(content, filename)
+        text = parsed_data["raw_text"]
 
-        if not text.strip():
-            return {"error": "⚠️ No text found in PDF!"}
+        # Extract skills
+        skills_data = SkillExtractor.extract_skills(text)
+        found_skills = skills_data["all_skills"]
 
-        print("✅ Extracted text:", text[:300])
+        # Generate suggested roles
+        suggested_roles = AIAssistant.suggest_job_roles(text, found_skills)
+        role_titles = [r["title"] if isinstance(r, dict) else str(r) for r in suggested_roles[:2]]
 
-        # Detect skills
-        found_skills = [s for s in skills if s.lower() in text.lower()]
-        print("✅ Found skills:", found_skills)
-
-        # === Create prompt ===
-        prompt = f"""
-You are a career recommendation assistant.
-Analyze this resume text and detected skills: {found_skills}.
-Suggest 12–15 job roles that match the candidate.
-Return JSON only.
-Resume text: {text}
-"""
-
-        # === CALL PERPLEXITY (SONAR PRO) ===
-        try:
-            payload = {
-                "model": "sonar-pro",
-                "messages": [
-                    {"role": "system", "content": "You are a career recommendation engine."},
-                    {"role": "user", "content": prompt}
-                ]
-            }
-
-            headers = {
-                "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-                "Content-Type": "application/json"
-            }
-
-            response = requests.post(PPLX_URL, json=payload, headers=headers)
-
-            print("📦 Raw Perplexity Response:", response.text)
-
-            response.raise_for_status()
-
-            model_output = response.json()["choices"][0]["message"]["content"]
-
-            # remove json fences
-            model_output = re.sub(r"^```json|```$", "", model_output, flags=re.IGNORECASE).strip()
-
-            try:
-                parsed_output = json.loads(model_output)
-            except:
-                parsed_output = {"raw_output": model_output}
-
-        except Exception as e:
-            print("❌ Perplexity API error:")
-            traceback.print_exc()
-            return {"error": f"Perplexity failed: {str(e)}"}
-
-        # --- Extract job roles ---
-        job_roles = []
-        if isinstance(parsed_output, dict):
-            job_roles = (
-                parsed_output.get("job_roles")
-                or parsed_output.get("suggested_roles")
-                or parsed_output.get("recommended_roles")
-                or []
-            )
-        elif isinstance(parsed_output, list):
-            job_roles = parsed_output
-
-        # --- Fetch TheirStack jobs ---
-        live_jobs = []
-        if job_roles:
-            for role in job_roles[:2]:
-                role_name = role["title"] if isinstance(role, dict) else role
-                jobs = fetch_jobs_from_theirstack(role_name, found_skills)
-                live_jobs.extend(jobs)
+        # Fetch live jobs
+        live_jobs = JobService.fetch_live_jobs(
+            roles=role_titles or ["Software Engineer"],
+            skills=found_skills,
+            country_code="IN",
+            limit_per_role=3
+        )
 
         return {
             "extracted_skills": found_skills,
-            "model_output": parsed_output,
+            "model_output": {"job_roles": suggested_roles},
             "live_jobs": live_jobs,
             "resume_text": text
         }
 
     except Exception as e:
-        print("❌ Unexpected error:")
+        print(f"[GrowPath API] Error in legacy recommend_jobs: {str(e)}")
         traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+

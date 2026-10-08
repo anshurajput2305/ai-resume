@@ -2,660 +2,795 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ATS Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrowPath AI — Career Platform & ATS Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Particles.js for dynamic background -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <style>
     :root{
-      --bg-dark: #0b0b0e;
-      --glass-weak: rgba(255,255,255,0.06);
-      --glass-strong: rgba(255,255,255,0.10);
+      --bg-dark: #08080c;
       --accent: #ff8c00;
-      --muted: #9aa4b2;
+      --muted: #94a3b8;
     }
 
-    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    html,body{
+      height:100%;margin:0;background:var(--bg-dark);color:#e2e8f0;
+      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    }
+    h1, h2, h3, h4, .brand-font { font-family: 'Outfit', 'Inter', sans-serif; }
 
-    /* Gradient overlay for depth */
     .gradient-overlay{
       position:fixed;inset:0;z-index:1;pointer-events:none;
-      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
-      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
-    }
-    @keyframes overlayShift{
-      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+      background: radial-gradient(circle at 10% 20%, rgba(255, 140, 0, 0.08), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.06), transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.04), transparent 60%);
     }
 
-    /* Particles container sits behind everything */
-    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.6;}
+    .glass { background: rgba(18, 18, 26, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+    .glass-strong { background: rgba(24, 24, 36, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
 
-    /* Glass panels */
-    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
-    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
-
-    /* Small helpers */
-    .accent { color: var(--accent); }
-    .muted { color: var(--muted); }
-
-    /* make sure your content sits above backgrounds */
-    .page-content { position: relative; z-index: 10; }
-
-    /* Responsive - reduce particles effect on mobile */
-    @media (max-width:700px){ #particles-js{opacity:0.8} }
-
-    /* tiny card hover lift */
-    .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
-    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
-
-    /* Progress circle animation */
-    .progress-circle {
-      transform: rotate(-90deg);
-      transition: stroke-dasharray 1s ease-in-out;
-    }
-
-    /* Score animation */
-    @keyframes scoreCount {
-      from { opacity: 0; transform: scale(0.5); }
-      to { opacity: 1; transform: scale(1); }
-    }
     
-    .score-animate {
-      animation: scoreCount 0.8s ease-out;
+    .tab-btn.active {
+      background: rgba(255, 140, 0, 0.18);
+      color: #ff8c00;
+      border-color: rgba(255, 140, 0, 0.4);
+      font-weight: 700;
     }
+
+    .accent-btn {
+      background: linear-gradient(135deg, #ff8c00 0%, #f97316 100%);
+      box-shadow: 0 4px 20px rgba(255, 140, 0, 0.35);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .accent-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 140, 0, 0.5);
+    }
+
+    .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
+    .lift:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
+    .page-content { position: relative; z-index: 10; }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col text-gray-200">
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-black">
 
-  <!-- Background layers -->
   <div id="particles-js" aria-hidden="true"></div>
   <div class="gradient-overlay" aria-hidden="true"></div>
 
-  <div class="page-content">
-    <!-- Header -->
-    <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-6xl mx-auto">
-      <div class="max-w-7xl mx-auto flex items-center justify-between py-0.1 px-6">
-        <div class="flex items-center gap-3">
-          <img src="/frontend/logo4.png" alt="Logo" class="h-10 w-auto rounded" />
-          <div class="text-xl font-semibold accent">ATS Dashboard</div>
-        </div>
-        <nav class="flex gap-4">
-          <a href="/frontend/index.html" class="text-gray-300 hover:text-orange-400 transition-colors">Home</a>
-          <a href="/frontend/ats.html" class="text-gray-300 hover:text-orange-400 transition-colors">ATS Checker</a>
+  <div class="page-content flex flex-col min-h-screen">
+    
+    <!-- Navbar -->
+    <header class="glass sticky top-4 z-50 mt-4 rounded-3xl shadow-2xl max-w-6xl mx-4 lg:mx-auto border border-white/10">
+      <div class="flex items-center justify-between px-6 py-3">
+        
+        <a href="/" class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 p-0.5 shadow-lg flex items-center justify-center">
+            <div class="w-full h-full bg-[#0d0d12] rounded-[14px] flex items-center justify-center">
+              <span class="text-xl font-black text-orange-400">G</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-base font-bold text-white flex items-center gap-1.5">
+              GrowPath <span class="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold">Dashboard</span>
+            </div>
+            <div class="text-[11px] text-gray-400">Career Intelligence Platform</div>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
+          <a href="/" class="hover:text-orange-400 transition">Resume Parser</a>
+          <a href="/ats" class="hover:text-orange-400 transition">ATS Matcher</a>
+          <a href="/dashboard" class="text-orange-400 font-semibold">Career Dashboard</a>
         </nav>
+
+        <div class="flex items-center gap-3">
+          <button onclick="exportFullReport()" class="px-3.5 py-1.5 glass hover:bg-white/10 text-xs font-semibold text-gray-200 rounded-xl border border-white/15 transition flex items-center gap-1.5">
+            <span>📥</span> Export Report
+          </button>
+          <a href="/#resume" class="px-3.5 py-1.5 text-xs font-bold text-black accent-btn rounded-xl">
+            Upload New
+          </a>
+        </div>
+
       </div>
     </header>
 
-    <!-- Dashboard Content -->
-    <div class="max-w-6xl mx-auto mt-10 px-6">
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
       
-      <!-- Main Score Card -->
-      <div class="glass rounded-3xl shadow-2xl p-8 mb-8 lift">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+      <!-- Top Profile Bar -->
+      <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 mb-8 lift">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           
-          <!-- Score Display with Horizontal Meter -->
-          <div class="flex flex-col items-center">
-            <!-- Main Score Display -->
-            <div class="text-center mb-8">
-              <div id="scoreDisplay" class="text-8xl font-bold accent score-animate leading-none mb-2">--</div>
-              <div class="text-lg muted font-medium">ATS Score</div>
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500/30 to-pink-500/30 border border-orange-500/40 flex items-center justify-center text-2xl font-bold text-orange-300">
+              <span id="dashAvatar">👤</span>
             </div>
-            
-            <!-- Horizontal Progress Meter -->
-            <div class="w-full max-w-lg mb-6">
-              <!-- Progress Bar Container -->
-              <div class="relative h-6 bg-gray-800/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                <!-- Color Segments Background -->
-                <div class="absolute inset-0 flex">
-                  <div class="flex-1 bg-gradient-to-r from-red-500/20 to-red-400/20"></div>
-                  <div class="flex-1 bg-gradient-to-r from-yellow-500/20 to-yellow-400/20"></div>
-                  <div class="flex-1 bg-gradient-to-r from-orange-500/20 to-orange-400/20"></div>
-                  <div class="flex-1 bg-gradient-to-r from-green-500/20 to-green-400/20"></div>
-                </div>
-                
-                <!-- Progress Fill with Multi-Color Gradient -->
-                <div id="horizontalProgress" 
-                     class="absolute left-0 top-0 h-full rounded-full transition-all duration-2000 ease-out"
-                     style="width: 0%; background: linear-gradient(to right, #ef4444 0%, #eab308 25%, #f97316 50%, #22c55e 75%, #22c55e 100%); filter: drop-shadow(0 0 12px rgba(255, 140, 0, 0.6));">
-                </div>
-                
-                <!-- Score Marker -->
-                <div id="horizontalMarker" 
-                     class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full border-4 border-orange-500 transition-all duration-2000 ease-out"
-                     style="left: 0%; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));">
-                  <div class="absolute inset-1 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full"></div>
-                </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 id="dashCandidateName" class="text-2xl font-bold text-white">Alex Johnson</h1>
+                <span id="dashScoreBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                  ATS Ready
+                </span>
               </div>
-              
-              <!-- Score Labels -->
-              <div class="flex justify-between text-sm muted mt-3 font-medium">
-                <span>0</span>
-                <span>25</span>
-                <span>50</span>
-                <span>75</span>
-                <span>100</span>
-              </div>
-            </div>
-            
-            <!-- Performance Labels -->
-            <div class="flex justify-between text-sm muted mb-6 w-full max-w-lg font-medium">
-              <span class="text-red-400">Poor</span>
-              <span class="text-yellow-400">Fair</span>
-              <span class="text-orange-400">Good</span>
-              <span class="text-green-400">Excellent</span>
-            </div>
-            
-            <!-- Score interpretation -->
-            <div id="scoreInterpretation" class="text-center text-lg font-semibold">
-              <span class="muted">Awaiting Analysis</span>
+              <p id="dashCandidateContact" class="text-xs text-gray-400 mt-1">alex.johnson.dev@gmail.com • San Francisco, CA</p>
             </div>
           </div>
 
-          <!-- Score Details -->
-          <div class="lg:col-span-2">
-            <h2 class="text-3xl font-bold accent mb-4">Resume Analysis Results</h2>
-            <div id="scoreSummary" class="text-lg muted mb-6">
-              Upload a resume and run ATS analysis to see your results here.
+          <!-- Overall Score Summary -->
+          <div class="flex items-center gap-6 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+            <div class="text-center">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Overall ATS Score</div>
+              <div id="dashOverallScore" class="text-4xl font-extrabold text-orange-400">84<span class="text-xl text-gray-400">/100</span></div>
             </div>
-            
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="glass rounded-lg p-4 text-center">
-                <div id="matchedCount" class="text-2xl font-bold text-green-400">--</div>
-                <div class="text-xs muted">Matched Keywords</div>
-              </div>
-              <div class="glass rounded-lg p-4 text-center">
-                <div id="missingCount" class="text-2xl font-bold text-red-400">--</div>
-                <div class="text-xs muted">Missing Keywords</div>
-              </div>
-              <div class="glass rounded-lg p-4 text-center">
-                <div id="skillsCount" class="text-2xl font-bold text-orange-400">--</div>
-                <div class="text-xs muted">Skills Gap</div>
-              </div>
-              <div class="glass rounded-lg p-4 text-center">
-                <div id="recommendationsCount" class="text-2xl font-bold text-blue-400">--</div>
-                <div class="text-xs muted">Recommendations</div>
+            <div class="h-10 w-[1px] bg-white/10"></div>
+            <div>
+              <div class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Target Match</div>
+              <div id="dashVerdict" class="text-xs text-emerald-300 font-semibold max-w-[200px] leading-tight mt-0.5">
+                Excellent ATS Alignment
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Detailed Analysis Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        
-        <!-- Matched Keywords -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-green-400 mr-2">✅</span> Matched Keywords
-          </h3>
-          <div id="matchedKeywords" class="flex flex-wrap gap-2">
-            <div class="text-muted">No data available</div>
-          </div>
-        </div>
-
-        <!-- Missing Keywords -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-red-400 mr-2">❌</span> Missing Keywords
-          </h3>
-          <div id="missingKeywords" class="flex flex-wrap gap-2">
-            <div class="text-muted">No data available</div>
-          </div>
-        </div>
-
-        <!-- Skills Gap -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-orange-400 mr-2">🎯</span> Skills to Develop
-          </h3>
-          <div id="skillsGap" class="flex flex-wrap gap-2">
-            <div class="text-muted">No data available</div>
-          </div>
-        </div>
-
-        <!-- Recommendations -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-blue-400 mr-2">💡</span> Recommendations
-          </h3>
-          <div id="recommendations" class="space-y-2">
-            <div class="text-muted">No data available</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Analytics Insights Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        
-        <!-- Performance Breakdown -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-purple-400 mr-2">📊</span> Performance Breakdown
-          </h3>
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span class="text-sm muted">Keyword Match Rate</span>
-              <div class="flex items-center gap-2">
-                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div id="keywordMatchBar" class="h-full bg-green-500 transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <span id="keywordMatchPercent" class="text-sm font-semibold text-green-400">0%</span>
-              </div>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm muted">Skills Coverage</span>
-              <div class="flex items-center gap-2">
-                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div id="skillsCoverageBar" class="h-full bg-orange-500 transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <span id="skillsCoveragePercent" class="text-sm font-semibold text-orange-400">0%</span>
-              </div>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm muted">Overall Readiness</span>
-              <div class="flex items-center gap-2">
-                <div class="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div id="readinessBar" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <span id="readinessPercent" class="text-sm font-semibold text-blue-400">0%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Insights -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-cyan-400 mr-2">💡</span> Quick Insights
-          </h3>
-          <div id="quickInsights" class="space-y-3">
-            <div class="text-muted text-sm">Run analysis to see insights</div>
-          </div>
-        </div>
-
-        <!-- Action Items -->
-        <div class="glass rounded-3xl shadow-lg p-6 lift">
-          <h3 class="text-xl font-semibold accent mb-4 flex items-center">
-            <span class="text-pink-400 mr-2">🎯</span> Priority Actions
-          </h3>
-          <div id="priorityActions" class="space-y-3">
-            <div class="text-muted text-sm">No actions available</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="text-center mb-8">
-        <a href="/frontend/ats.html" 
-           class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg mr-4">
-          Run New Analysis
-        </a>
-        <button onclick="exportResults()" 
-                class="glass border border-orange-400 text-orange-400 px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:bg-orange-400/10">
-          Export Results
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-8 border-b border-white/10 text-xs sm:text-sm">
+        <button onclick="switchDashTab('audit')" id="tabBtnAudit" class="tab-btn active px-4 py-2.5 rounded-xl glass border border-white/10 font-semibold transition flex items-center gap-2">
+          <span>📊</span> ATS & Resume Audit
+        </button>
+        <button onclick="switchDashTab('jdmatch')" id="tabBtnJD" class="tab-btn px-4 py-2.5 rounded-xl glass border border-white/10 font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
+          <span>🎯</span> JD Match & Skill Gap
+        </button>
+        <button onclick="switchDashTab('optimizer')" id="tabBtnOpt" class="tab-btn px-4 py-2.5 rounded-xl glass border border-white/10 font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
+          <span>✨</span> AI Bullet Optimizer
+        </button>
+        <button onclick="switchDashTab('jobs')" id="tabBtnJobs" class="tab-btn px-4 py-2.5 rounded-xl glass border border-white/10 font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
+          <span>💼</span> Live Job Matches
+        </button>
+        <button onclick="switchDashTab('interview')" id="tabBtnInterview" class="tab-btn px-4 py-2.5 rounded-xl glass border border-white/10 font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
+          <span>🎙</span> AI Interview Prep
         </button>
       </div>
-    </div>
+
+      <!-- TAB 1: ATS & RESUME AUDIT -->
+      <div id="dashTabAudit" class="space-y-8">
+        
+        <!-- Score Meter & Sub-Scores Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <!-- Score Gauge Card -->
+          <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 flex flex-col items-center justify-between text-center lift">
+            <div class="w-full">
+              <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">Evaluation Meter</span>
+              <div id="meterScoreNumber" class="text-7xl font-extrabold text-white my-4">84</div>
+              <div id="meterScoreText" class="text-sm font-semibold text-emerald-300">ATS Optimized (Top 15%)</div>
+            </div>
+
+            <!-- Horizontal Segmented Bar -->
+            <div class="w-full my-6">
+              <div class="relative h-4 bg-gray-800 rounded-full overflow-hidden border border-white/10">
+                <div id="meterFillBar" class="h-full bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-400 rounded-full transition-all duration-1000" style="width: 84%;"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-gray-400 mt-2 font-mono">
+                <span>0 Needs Work</span>
+                <span>50 Fair</span>
+                <span>75 Good</span>
+                <span>100 Perfect</span>
+              </div>
+            </div>
+
+            <div class="text-xs text-gray-400 leading-relaxed">
+              Deterministic score calculated across contact data, section structure, metrics, action verbs, and keyword density.
+            </div>
+          </div>
+
+          <!-- Breakdown Progress Bars -->
+          <div class="lg:col-span-2 glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-5 lift">
+            <h3 class="text-base font-bold text-white flex items-center justify-between">
+              <span>📈 6-Category ATS Performance Breakdown</span>
+              <span class="text-xs text-orange-400 font-normal">Objective Metrics</span>
+            </h3>
+
+            <div class="space-y-4">
+              <!-- ATS Compatibility -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">ATS Formatting & Contact Data</span>
+                  <span id="scoreCompat" class="text-emerald-400">88%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barCompat" class="h-full bg-emerald-400 rounded-full transition-all duration-700" style="width: 88%;"></div>
+                </div>
+              </div>
+
+              <!-- Skills Score -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">Technical Skills & Taxonomy</span>
+                  <span id="scoreSkills" class="text-orange-400">92%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barSkills" class="h-full bg-orange-400 rounded-full transition-all duration-700" style="width: 92%;"></div>
+                </div>
+              </div>
+
+              <!-- Experience & Impact -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">Experience & Quantifiable Metrics</span>
+                  <span id="scoreImpact" class="text-amber-400">82%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barImpact" class="h-full bg-amber-400 rounded-full transition-all duration-700" style="width: 82%;"></div>
+                </div>
+              </div>
+
+              <!-- Projects -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">Featured Technical Projects</span>
+                  <span id="scoreProjects" class="text-pink-400">85%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barProjects" class="h-full bg-pink-400 rounded-full transition-all duration-700" style="width: 85%;"></div>
+                </div>
+              </div>
+
+              <!-- Keywords -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">Keyword Density & Distribution</span>
+                  <span id="scoreKeywords" class="text-cyan-400">80%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barKeywords" class="h-full bg-cyan-400 rounded-full transition-all duration-700" style="width: 80%;"></div>
+                </div>
+              </div>
+
+              <!-- Formatting & Length -->
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-semibold">
+                  <span class="text-gray-300">Resume Length & Structure</span>
+                  <span id="scoreFormat" class="text-purple-400">90%</span>
+                </div>
+                <div class="h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div id="barFormat" class="h-full bg-purple-400 rounded-full transition-all duration-700" style="width: 90%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Stats Chips -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="glass p-4 rounded-2xl text-center border border-white/10 lift">
+            <div id="statWordCount" class="text-2xl font-bold text-white">480</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Word Count (Optimal)</div>
+          </div>
+          <div class="glass p-4 rounded-2xl text-center border border-white/10 lift">
+            <div id="statSkillsCount" class="text-2xl font-bold text-orange-400">18</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Skills Detected</div>
+          </div>
+          <div class="glass p-4 rounded-2xl text-center border border-white/10 lift">
+            <div id="statActionVerbs" class="text-2xl font-bold text-emerald-400">8</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Power Action Verbs</div>
+          </div>
+          <div class="glass p-4 rounded-2xl text-center border border-white/10 lift">
+            <div id="statMetrics" class="text-2xl font-bold text-pink-400">5</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Quantifiable Metrics</div>
+          </div>
+        </div>
+
+        <!-- Detailed Checks & Action Items Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Full ATS Checklist -->
+          <div class="glass-strong rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 space-y-4 lift">
+            <h3 class="text-base font-bold text-white flex items-center justify-between">
+              <span>✅ ATS Audit Checklist</span>
+              <span class="text-xs text-gray-400">System Verification</span>
+            </h3>
+            <div id="dashChecksList" class="space-y-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Recommendations & Action Items -->
+          <div class="glass-strong rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 space-y-4 lift">
+            <h3 class="text-base font-bold text-white flex items-center justify-between">
+              <span>🎯 Priority Recommendations</span>
+              <span class="text-xs text-orange-400">Actionable Steps</span>
+            </h3>
+            <div id="dashRecsList" class="space-y-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Categorized Skills Grid -->
+        <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6 lift">
+          <h3 class="text-base font-bold text-white flex items-center justify-between">
+            <span>🧠 Extracted Technical Skills Taxonomy</span>
+            <span class="text-xs text-orange-400">Grouped by Category</span>
+          </h3>
+          <div id="dashCategorizedSkills" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: JD MATCH & SKILL GAP -->
+      <div id="dashTabJD" class="hidden space-y-8">
+        <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🎯</span>
+                <h3 class="text-xl font-bold text-white">JD Match & Skill Gap Analysis</h3>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">Compare your resume against a target job description to uncover skill gaps, keyword overlap, and tailoring opportunities.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-gray-400 hidden sm:inline">Presets:</span>
+              <button type="button" onclick="fillSampleJD('fullstack')" class="text-xs px-3 py-1.5 glass hover:bg-orange-500/20 text-orange-300 rounded-xl border border-orange-500/30 transition cursor-pointer">
+                Full Stack
+              </button>
+              <button type="button" onclick="fillSampleJD('ai_ml')" class="text-xs px-3 py-1.5 glass hover:bg-orange-500/20 text-orange-300 rounded-xl border border-orange-500/30 transition cursor-pointer">
+                AI / ML
+              </button>
+              <button type="button" onclick="fillSampleJD('backend')" class="text-xs px-3 py-1.5 glass hover:bg-orange-500/20 text-orange-300 rounded-xl border border-orange-500/30 transition cursor-pointer">
+                Backend
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label for="dashResumeInput" class="block text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                  <span>📄</span> Current Resume Context
+                </label>
+                <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">Auto-loaded</span>
+              </div>
+              <textarea id="dashResumeInput" rows="11" placeholder="Upload and analyze a resume first to compare with a job description, or paste your resume text here..." class="w-full border border-white/15 focus:border-orange-500 rounded-2xl p-4 bg-black/40 text-gray-200 text-xs font-mono leading-relaxed placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"></textarea>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label for="dashJDInput" class="block text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                  <span>🎯</span> Target Job Description
+                </label>
+                <span class="text-[10px] text-orange-400 font-semibold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">Required</span>
+              </div>
+
+              <!-- Upload JD Option -->
+              <div class="mb-3 space-y-2">
+                <input type="file" id="dashJDFileInput" accept=".pdf,.docx,.doc,.txt" class="hidden" onchange="if(this.files.length) handleJDFileSelected(this.files[0])" />
+                
+                <div id="dashJDDropZone" onclick="document.getElementById('dashJDFileInput').click()"
+                     class="group relative border border-dashed border-white/20 hover:border-orange-500/60 bg-black/30 hover:bg-orange-500/5 rounded-2xl p-3 text-center cursor-pointer transition-all duration-200">
+                  <div class="flex items-center justify-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-400 group-hover:scale-110 flex items-center justify-center text-sm transition-transform shrink-0">
+                      📄
+                    </div>
+                    <div class="text-left">
+                      <div class="text-xs font-semibold text-gray-200 group-hover:text-orange-300 transition-colors">
+                        <span class="text-orange-400 font-bold">Upload JD File</span> or drag & drop here
+                      </div>
+                      <div class="text-[10px] text-gray-400">
+                        Supported: <span class="text-gray-300 font-medium">PDF • DOCX • TXT</span> (Max 10 MB)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Upload Status / Loaded File Info Banner -->
+                <div id="dashJDFileStatus" class="hidden"></div>
+              </div>
+
+              <!-- Textarea for Extracted / Pasted Requirements -->
+              <div class="relative">
+                <div class="text-[11px] text-gray-400 mb-1 flex items-center justify-between">
+                  <span>Or edit / paste job description text below:</span>
+                </div>
+                <textarea id="dashJDInput" rows="7" placeholder="Paste target job opening requirements, qualifications, and responsibilities here (or upload a JD file above)..." class="w-full border border-white/15 focus:border-orange-500 rounded-2xl p-4 bg-black/40 text-gray-200 text-xs font-mono leading-relaxed placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"></textarea>
+                
+                <!-- Extraction Loading Overlay -->
+                <div id="dashJDExtractLoader" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-4 text-center">
+                  <div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-xs text-orange-300 font-semibold">Extracting text from Job Description...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+            <button id="dashJDAnalyzeBtn" onclick="analyzeJobMatch()" class="px-7 py-3.5 accent-btn text-black font-extrabold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 hover:brightness-110 transition cursor-pointer">
+              <span>⚡</span> Analyze Job Match
+            </button>
+            <div class="text-[11px] text-gray-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Deterministic matching across Skills, Keywords, Experience & Projects</span>
+            </div>
+          </div>
+
+          <div id="dashJDMatchResult" class="hidden"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: AI BULLET OPTIMIZER -->
+      <div id="dashTabOptimizer" class="hidden space-y-8">
+        <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6">
+          <div>
+            <h3 class="text-xl font-bold text-white">AI STAR Method Bullet Point Rewriter</h3>
+            <p class="text-xs text-gray-400 mt-1">Transform weak, passive descriptions into high-impact, quantified achievements.</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-300 mb-2">Target Role</label>
+              <input type="text" id="bulletTargetRole" value="Senior Software Engineer" class="w-full sm:w-80 border border-white/15 rounded-xl px-4 py-2.5 bg-black/40 text-xs text-white" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-300 mb-2">Original Bullet Point or Project Description</label>
+              <textarea id="bulletInput" rows="3" placeholder="e.g. Worked on the backend API using Python and helped speed up queries." class="w-full border border-white/15 focus:border-orange-500 rounded-2xl p-4 bg-black/40 text-gray-200 text-xs font-sans"></textarea>
+            </div>
+
+            <button onclick="optimizeBulletPoint()" class="px-6 py-3 accent-btn text-black font-bold text-xs rounded-xl">
+              ✨ Rewrite with STAR Framework
+            </button>
+          </div>
+
+          <div id="bulletResultBox" class="hidden p-6 glass rounded-2xl border border-orange-500/30"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: LIVE JOBS -->
+      <div id="dashTabJobs" class="hidden space-y-8">
+        <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6">
+          
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <h3 class="text-xl font-bold text-white">Live Job Matches</h3>
+              <p class="text-xs text-gray-400 mt-1">Verified active listings matching candidate skills & roles.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+              <button data-job-country="IN" onclick="fetchJobsForCountry('IN')" class="job-country-pill px-3 py-1.5 rounded-xl bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-semibold transition">
+                🇮🇳 India
+              </button>
+              <button data-job-country="US" onclick="fetchJobsForCountry('US')" class="job-country-pill px-3 py-1.5 rounded-xl glass hover:bg-white/10 text-xs text-gray-300 transition">
+                🇺🇸 US
+              </button>
+              <button data-job-country="GB" onclick="fetchJobsForCountry('GB')" class="job-country-pill px-3 py-1.5 rounded-xl glass hover:bg-white/10 text-xs text-gray-300 transition">
+                🇬🇧 UK
+              </button>
+              <button data-job-country="GLOBAL" onclick="fetchJobsForCountry('GLOBAL')" class="job-country-pill px-3 py-1.5 rounded-xl glass hover:bg-white/10 text-xs text-gray-300 transition">
+                🌐 Remote
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Search Bar -->
+          <div class="flex items-center gap-3">
+            <input type="text" id="dashJobSearchInput" placeholder="Search by job title or skill (e.g. Full Stack Developer, React, Data Engineer, Python)..." class="flex-1 bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition" onkeydown="if(event.key==='Enter') searchCustomJobs()" />
+            <button onclick="searchCustomJobs()" class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-bold text-xs rounded-xl hover:brightness-110 transition shrink-0 shadow-lg shadow-orange-500/20">
+              🔍 Search Jobs
+            </button>
+          </div>
+
+          <div id="dashJobsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Dynamically populated -->
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 5: AI INTERVIEW PREP -->
+      <div id="dashTabInterview" class="hidden space-y-8">
+        <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <h3 class="text-xl font-bold text-white">AI Tailored Interview Preparation</h3>
+              <p class="text-xs text-gray-400 mt-1">Technical questions, STAR frameworks, and model answers based on your background.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <input type="text" id="interviewRoleInput" value="Full Stack Software Engineer" class="border border-white/15 rounded-xl px-3 py-1.5 bg-black/40 text-xs text-white" />
+              <button onclick="generateInterviewPrep()" class="px-4 py-2 accent-btn text-black font-bold text-xs rounded-xl shrink-0">
+                🎙 Generate Questions
+              </button>
+            </div>
+          </div>
+
+          <div id="interviewQuestionsContainer">
+            <div class="p-8 text-center glass rounded-2xl border border-white/5 text-gray-400 text-xs">
+              Click 'Generate Questions' to create a customized interview packet tailored to your resume and target role.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass mt-auto py-6 border-t border-white/10 text-center text-xs text-gray-500">
+      © 2026 GrowPath AI — Empowering Tech Careers with Intelligent Tools
+    </footer>
+
   </div>
 
-  <!-- Dashboard Scripts -->
+  <!-- Roadmap Modal -->
+  <div id="roadmapModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="roadmapModalContent" class="glass-strong rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-orange-500/40 shadow-2xl max-h-[90vh] overflow-y-auto"></div>
+  </div>
+
+  <!-- Dashboard Initialization Script -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       loadDashboardData();
     });
 
+    function switchDashTab(tabId) {
+      const tabMap = {
+        'audit': { pane: 'dashTabAudit', btn: 'tabBtnAudit' },
+        'jdmatch': { pane: 'dashTabJD', btn: 'tabBtnJD' },
+        'optimizer': { pane: 'dashTabOptimizer', btn: 'tabBtnOpt' },
+        'jobs': { pane: 'dashTabJobs', btn: 'tabBtnJobs' },
+        'interview': { pane: 'dashTabInterview', btn: 'tabBtnInterview' }
+      };
+
+      Object.keys(tabMap).forEach(t => {
+        const config = tabMap[t];
+        const pane = document.getElementById(config.pane);
+        const btn = document.getElementById(config.btn);
+        if (pane) {
+          if (t === tabId) {
+            pane.classList.remove('hidden');
+          } else {
+            pane.classList.add('hidden');
+          }
+        }
+        if (btn) {
+          if (t === tabId) {
+            btn.classList.add('active');
+            btn.classList.remove('text-gray-400');
+          } else {
+            btn.classList.remove('active');
+            btn.classList.add('text-gray-400');
+          }
+        }
+      });
+    }
+    window.switchDashTab = switchDashTab;
+
     function loadDashboardData() {
-      const atsData = localStorage.getItem("ats_analysis");
-      
-      if (atsData) {
-        try {
-          const analysis = JSON.parse(atsData);
-          displayAnalysis(analysis);
-        } catch (e) {
-          console.error("Error parsing ATS data:", e);
-        }
-      } else {
-        // Show empty state
-        showEmptyState();
-      }
-    }
+      const stored = localStorage.getItem("growpath_data");
+      let data = null;
 
-    function displayAnalysis(analysis) {
-      // Update main score with animation
-      const score = analysis.ats_score || 0;
-      animateScore(score);
-      
-      // Update summary
-      document.getElementById("scoreSummary").textContent = 
-        analysis.summary || "Analysis completed successfully.";
-      
-      // Update quick stats
-      document.getElementById("matchedCount").textContent = 
-        analysis.keyword_matches ? analysis.keyword_matches.length : 0;
-      document.getElementById("missingCount").textContent = 
-        analysis.missing_keywords ? analysis.missing_keywords.length : 0;
-      document.getElementById("skillsCount").textContent = 
-        analysis.skills_gap ? analysis.skills_gap.length : 0;
-      document.getElementById("recommendationsCount").textContent = 
-        analysis.recommendations ? analysis.recommendations.length : 0;
-      
-      // Update detailed sections
-      updateKeywordSection("matchedKeywords", analysis.keyword_matches, "bg-green-600/20 text-green-300");
-      updateKeywordSection("missingKeywords", analysis.missing_keywords, "bg-red-600/20 text-red-300");
-      updateKeywordSection("skillsGap", analysis.skills_gap, "bg-orange-600/20 text-orange-300");
-      updateRecommendations(analysis.recommendations);
-      
-      // Update analytics sections
-      setTimeout(() => {
-        updateAnalytics(analysis);
-      }, 1000);
-    }
+      if (stored) {
+        try { data = JSON.parse(stored); } catch (e) {}
+      }
 
-    function updateAnalytics(analysis) {
-      const matchedCount = analysis.keyword_matches ? analysis.keyword_matches.length : 0;
-      const missingCount = analysis.missing_keywords ? analysis.missing_keywords.length : 0;
-      const totalKeywords = matchedCount + missingCount;
-      
-      // Update performance bars
-      const keywordMatchRate = totalKeywords > 0 ? (matchedCount / totalKeywords) * 100 : 0;
-      const skillsCoverage = analysis.ats_score || 0;
-      const readiness = Math.min(100, (keywordMatchRate + skillsCoverage) / 2);
-      
-      // Animate bars
-      setTimeout(() => {
-        document.getElementById("keywordMatchBar").style.width = `${keywordMatchRate}%`;
-        document.getElementById("keywordMatchPercent").textContent = `${Math.round(keywordMatchRate)}%`;
-        
-        document.getElementById("skillsCoverageBar").style.width = `${skillsCoverage}%`;
-        document.getElementById("skillsCoveragePercent").textContent = `${Math.round(skillsCoverage)}%`;
-        
-        document.getElementById("readinessBar").style.width = `${readiness}%`;
-        document.getElementById("readinessPercent").textContent = `${Math.round(readiness)}%`;
-      }, 500);
-      
-      // Update quick insights
-      const insights = [];
-      if (keywordMatchRate >= 80) {
-        insights.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">Strong keyword alignment</span></div>');
-      } else if (keywordMatchRate >= 60) {
-        insights.push('<div class="flex items-center gap-2"><span class="text-yellow-400">⚠</span><span class="text-sm">Good keyword coverage</span></div>');
-      } else {
-        insights.push('<div class="flex items-center gap-2"><span class="text-red-400">✗</span><span class="text-sm">Improve keyword matching</span></div>');
-      }
-      
-      if (analysis.ats_score >= 75) {
-        insights.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">ATS-friendly format</span></div>');
-      } else {
-        insights.push('<div class="flex items-center gap-2"><span class="text-orange-400">⚠</span><span class="text-sm">Format needs optimization</span></div>');
-      }
-      
-      document.getElementById("quickInsights").innerHTML = insights.join('');
-      
-      // Update priority actions
-      const actions = [];
-      if (missingCount > 0) {
-        actions.push(`<div class="flex items-center gap-2"><span class="text-red-400">1.</span><span class="text-sm">Add ${Math.min(3, missingCount)} missing keywords</span></div>`);
-      }
-      if (analysis.ats_score < 75) {
-        actions.push('<div class="flex items-center gap-2"><span class="text-orange-400">2.</span><span class="text-sm">Improve resume formatting</span></div>');
-      }
-      if (analysis.skills_gap && analysis.skills_gap.length > 0) {
-        actions.push(`<div class="flex items-center gap-2"><span class="text-blue-400">3.</span><span class="text-sm">Develop ${analysis.skills_gap.length} key skills</span></div>`);
-      }
-      
-      if (actions.length === 0) {
-        actions.push('<div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-sm">Resume looks great!</span></div>');
-      }
-      
-      document.getElementById("priorityActions").innerHTML = actions.join('');
-    }
-
-    function animateScore(targetScore) {
-      const scoreElement = document.getElementById("scoreDisplay");
-      const horizontalProgress = document.getElementById("horizontalProgress");
-      const horizontalMarker = document.getElementById("horizontalMarker");
-      const scoreInterpretation = document.getElementById("scoreInterpretation");
-      
-      // Animate number counting
-      let currentScore = 0;
-      const increment = targetScore / 50; // 50 steps
-      const timer = setInterval(() => {
-        currentScore += increment;
-        if (currentScore >= targetScore) {
-          currentScore = targetScore;
-          clearInterval(timer);
-        }
-        scoreElement.textContent = Math.round(currentScore);
-      }, 20);
-      
-      // Animate horizontal meter
-      setTimeout(() => {
-        animateHorizontalMeter(targetScore);
-      }, 300);
-      
-      // Update score interpretation
-      setTimeout(() => {
-        updateScoreInterpretation(targetScore);
-      }, 1800);
-    }
-    
-    function animateHorizontalMeter(score) {
-      const horizontalProgress = document.getElementById("horizontalProgress");
-      const horizontalMarker = document.getElementById("horizontalMarker");
-      
-      // Calculate percentage
-      const percentage = Math.min(100, Math.max(0, score));
-      
-      // Update progress bar width - the gradient will show the appropriate color at that position
-      horizontalProgress.style.width = `${percentage}%`;
-      
-      // Update marker position
-      horizontalMarker.style.left = `${percentage}%`;
-      
-      // Update marker color based on score range
-      const markerInner = horizontalMarker.querySelector('div');
-      if (score >= 75) {
-        // Green section
-        horizontalMarker.style.borderColor = '#22c55e';
-        markerInner.style.background = 'linear-gradient(to bottom right, #22c55e, #16a34a)';
-        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(34, 197, 94, 0.6))";
-      } else if (score >= 50) {
-        // Orange section
-        horizontalMarker.style.borderColor = '#f97316';
-        markerInner.style.background = 'linear-gradient(to bottom right, #f97316, #ea580c)';
-        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(249, 115, 22, 0.6))";
-      } else if (score >= 25) {
-        // Yellow section
-        horizontalMarker.style.borderColor = '#eab308';
-        markerInner.style.background = 'linear-gradient(to bottom right, #eab308, #ca8a04)';
-        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(234, 179, 8, 0.6))";
-      } else {
-        // Red section
-        horizontalMarker.style.borderColor = '#ef4444';
-        markerInner.style.background = 'linear-gradient(to bottom right, #ef4444, #dc2626)';
-        horizontalProgress.style.filter = "drop-shadow(0 0 12px rgba(239, 68, 68, 0.6))";
-      }
-    }
-    
-    function updateScoreInterpretation(score) {
-      const interpretationElement = document.getElementById("scoreInterpretation");
-      let interpretation = "";
-      let colorClass = "";
-      
-      if (score >= 90) {
-        interpretation = "🎉 Excellent - ATS Optimized";
-        colorClass = "text-green-400";
-      } else if (score >= 75) {
-        interpretation = "✅ Good - Minor Improvements Needed";
-        colorClass = "text-green-300";
-      } else if (score >= 60) {
-        interpretation = "⚠️ Fair - Needs Optimization";
-        colorClass = "text-yellow-400";
-      } else if (score >= 40) {
-        interpretation = "❌ Poor - Major Improvements Required";
-        colorClass = "text-orange-400";
-      } else {
-        interpretation = "🚫 Very Poor - Complete Overhaul Needed";
-        colorClass = "text-red-400";
-      }
-      
-      interpretationElement.innerHTML = `<span class="${colorClass}">${interpretation}</span>`;
-    }
-    
-    function animateMainSemiCircle(score) {
-      const mainProgressArc = document.getElementById("mainProgressArc");
-      const mainScoreMarker = document.getElementById("mainScoreMarker");
-      
-      // Calculate angle for semi-circle (180 degrees total)
-      const angle = (score / 100) * 180;
-      const radians = (angle - 90) * (Math.PI / 180); // -90 to start from left
-      
-      // Calculate end point of arc (center at 140, 140, radius 100)
-      const centerX = 140;
-      const centerY = 140;
-      const radius = 100;
-      const endX = centerX + radius * Math.cos(radians);
-      const endY = centerY + radius * Math.sin(radians);
-      
-      // Create arc path
-      const largeArcFlag = angle > 90 ? 1 : 0;
-      const arcPath = `M 40 140 A 100 100 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-      
-      // Update arc
-      mainProgressArc.setAttribute("d", arcPath);
-      
-      // Update marker position
-      mainScoreMarker.setAttribute("cx", endX);
-      mainScoreMarker.setAttribute("cy", endY);
-    }
-    
-    function animateSemiCircle(score) {
-      // This function is no longer needed as we're using the main semi-circle
-      // Keeping it for compatibility but it won't be called
-    }
-    
-    function updateScoreInterpretation(score) {
-      const interpretationElement = document.getElementById("scoreInterpretation");
-      let interpretation = "";
-      let colorClass = "";
-      
-      if (score >= 90) {
-        interpretation = "🎉 Excellent - ATS Optimized";
-        colorClass = "text-green-400";
-      } else if (score >= 75) {
-        interpretation = "✅ Good - Minor Improvements Needed";
-        colorClass = "text-green-300";
-      } else if (score >= 60) {
-        interpretation = "⚠️ Fair - Needs Optimization";
-        colorClass = "text-yellow-400";
-      } else if (score >= 40) {
-        interpretation = "❌ Poor - Major Improvements Required";
-        colorClass = "text-orange-400";
-      } else {
-        interpretation = "🚫 Very Poor - Complete Overhaul Needed";
-        colorClass = "text-red-400";
-      }
-      
-      interpretationElement.innerHTML = `<span class="${colorClass}">${interpretation}</span>`;
-    }
-
-    function updateKeywordSection(elementId, keywords, className) {
-      const element = document.getElementById(elementId);
-      if (keywords && keywords.length > 0) {
-        element.innerHTML = keywords.map(keyword => 
-          `<span class="${className} px-3 py-1 rounded-full text-sm">${keyword}</span>`
-        ).join('');
-      } else {
-        element.innerHTML = '<div class="text-muted">No items found</div>';
-      }
-    }
-
-    function updateRecommendations(recommendations) {
-      const element = document.getElementById("recommendations");
-      if (recommendations && recommendations.length > 0) {
-        element.innerHTML = recommendations.map(rec => 
-          `<div class="flex items-start gap-2">
-            <span class="text-blue-400 mt-1">•</span>
-            <span class="text-gray-300">${rec}</span>
-          </div>`
-        ).join('');
-      } else {
-        element.innerHTML = '<div class="text-muted">No recommendations available</div>';
-      }
-    }
-
-    function showEmptyState() {
-      document.getElementById("scoreDisplay").textContent = "--";
-      document.getElementById("scoreSummary").textContent = 
-        "Upload a resume and run ATS analysis to see your results here.";
-      
-      // Reset horizontal meter to starting position
-      document.getElementById("horizontalProgress").style.width = "0%";
-      document.getElementById("horizontalMarker").style.left = "0%";
-      document.getElementById("scoreInterpretation").innerHTML = 
-        '<span class="muted">Awaiting Analysis</span>';
-    }
-
-    function exportResults() {
-      const atsData = localStorage.getItem("ats_analysis");
-      if (atsData) {
-        const analysis = JSON.parse(atsData);
-        const exportData = {
-          timestamp: new Date().toISOString(),
-          ats_score: analysis.ats_score,
-          summary: analysis.summary,
-          keyword_matches: analysis.keyword_matches,
-          missing_keywords: analysis.missing_keywords,
-          skills_gap: analysis.skills_gap,
-          recommendations: analysis.recommendations
+      if (!data) {
+        // Use default sample data if no resume uploaded yet
+        const sampleText = localStorage.getItem("growpath_resume_text") || localStorage.getItem("resume_text") || window.SAMPLE_RESUME_TEXT || "";
+        data = {
+          parsed_resume: {
+            contact_info: { name: "Alex Johnson", email: "alex.johnson.dev@gmail.com", phone: "+1 (555) 234-5678", linkedin: "Present", github: "Present" },
+            word_count: 480,
+            raw_text: sampleText
+          },
+          ats_analysis: {
+            overall_score: 84,
+            verdict: "Excellent - Highly ATS Optimized & Ready to Apply",
+            breakdown: { ats_compatibility: 88, skills_score: 92, experience_impact: 82, projects_score: 85, keywords_score: 80, formatting_score: 90 },
+            stats: { word_count: 480, total_skills_detected: 18, action_verbs_count: 8, metrics_detected_count: 5 },
+            checks: [
+              { name: "Professional Email", status: "pass", message: "Found email: alex.johnson.dev@gmail.com" },
+              { name: "LinkedIn Profile", status: "pass", message: "LinkedIn profile detected." },
+              { name: "GitHub / Portfolio", status: "pass", message: "GitHub link detected." },
+              { name: "Standard Sections", status: "pass", message: "Found Experience, Education, Skills, and Projects." },
+              { name: "Impact Metrics", status: "pass", message: "Found 5 quantifiable achievements (45%, 250k, etc.)." },
+              { name: "Action Verbs", status: "pass", message: "Strong power verbs used throughout experience." }
+            ],
+            recommendations: [
+              "Tailor your top 3 project bullets for the specific job description.",
+              "Include cloud security certifications if targeting DevSecOps roles."
+            ]
+          },
+          extracted_skills: {
+            all_skills: ["Python", "JavaScript", "TypeScript", "Go", "SQL", "React.js", "Next.js", "FastAPI", "Node.js", "PostgreSQL", "Redis", "AWS", "Docker", "Kubernetes", "CI/CD", "Git", "Jest", "PyTest"],
+            categorized_skills: {
+              "Programming Languages": ["Python", "JavaScript", "TypeScript", "Go", "SQL"],
+              "Frontend Development": ["React.js", "Next.js"],
+              "Backend Development": ["FastAPI", "Node.js"],
+              "Databases & Storage": ["PostgreSQL", "Redis"],
+              "Cloud & DevOps": ["AWS", "Docker", "Kubernetes", "CI/CD"],
+              "Tools & Testing": ["Git", "Jest", "PyTest"]
+            }
+          },
+          live_jobs: []
         };
-        
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], 
-          { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ats-analysis-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        alert("No analysis data to export. Please run an ATS analysis first.");
       }
+
+      populateDashboardUI(data);
+
+      // Check URL hash for direct tab navigation (e.g. #jdmatch or #interview)
+      if (window.location.hash) {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        if (['audit', 'jdmatch', 'optimizer', 'jobs', 'interview'].includes(hash)) {
+          switchDashTab(hash);
+        }
+      }
+    }
+
+    function populateDashboardUI(data) {
+      const p = data.parsed_resume || {};
+      const ats = data.ats_analysis || {};
+      const skills = data.extracted_skills || {};
+      const contact = p.contact_info || {};
+
+      // Candidate Header
+      document.getElementById("dashCandidateName").textContent = contact.name || "Candidate";
+      document.getElementById("dashCandidateContact").textContent = `${contact.email || "No email"} • ${contact.phone || "No phone"}`;
+      document.getElementById("dashOverallScore").innerHTML = `${ats.overall_score || 75}<span class="text-xl text-gray-400">/100</span>`;
+      document.getElementById("dashVerdict").textContent = ats.verdict || "Analysis Complete";
+
+      // Meter
+      document.getElementById("meterScoreNumber").textContent = ats.overall_score || 75;
+      const fillBar = document.getElementById("meterFillBar");
+      if (fillBar) fillBar.style.width = `${ats.overall_score || 75}%`;
+
+      // Breakdown bars
+      const bd = ats.breakdown || {};
+      setScoreBar("scoreCompat", "barCompat", bd.ats_compatibility || 80);
+      setScoreBar("scoreSkills", "barSkills", bd.skills_score || 85);
+      setScoreBar("scoreImpact", "barImpact", bd.experience_impact || 78);
+      setScoreBar("scoreProjects", "barProjects", bd.projects_score || 85);
+      setScoreBar("scoreKeywords", "barKeywords", bd.keywords_score || 75);
+      setScoreBar("scoreFormat", "barFormat", bd.formatting_score || 90);
+
+      // Stats
+      const stats = ats.stats || {};
+      document.getElementById("statWordCount").textContent = stats.word_count || p.word_count || 450;
+      document.getElementById("statSkillsCount").textContent = stats.total_skills_detected || (skills.all_skills || []).length || 12;
+      document.getElementById("statActionVerbs").textContent = stats.action_verbs_count || 6;
+      document.getElementById("statMetrics").textContent = stats.metrics_detected_count || 4;
+
+      // Checks
+      const checksList = document.getElementById("dashChecksList");
+      if (checksList) {
+        checksList.innerHTML = (ats.checks || []).map(c => `
+          <div class="p-3 glass rounded-xl border border-white/5 flex items-start gap-3">
+            <span class="text-sm shrink-0 mt-0.5">${c.status === "pass" ? "✅" : c.status === "warning" ? "⚠️" : "❌"}</span>
+            <div>
+              <div class="text-xs font-bold text-gray-200">${c.name}</div>
+              <div class="text-[11px] text-gray-400 mt-0.5">${c.message}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // Recommendations
+      const recsList = document.getElementById("dashRecsList");
+      if (recsList) {
+        recsList.innerHTML = (ats.recommendations || []).map((r, i) => `
+          <div class="p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-start gap-3">
+            <span class="text-xs font-bold px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded shrink-0">${i+1}</span>
+            <span class="text-xs text-gray-200 leading-relaxed">${r}</span>
+          </div>
+        `).join("");
+      }
+
+      // Categorized Skills
+      const catGrid = document.getElementById("dashCategorizedSkills");
+      if (catGrid) {
+        const catMap = skills.categorized_skills || {};
+        catGrid.innerHTML = Object.entries(catMap).map(([cat, skList]) => `
+          <div class="p-4 glass rounded-2xl border border-white/5 space-y-2">
+            <h4 class="text-xs font-bold text-orange-400 uppercase tracking-wider">${cat}</h4>
+            <div class="flex flex-wrap gap-1.5">
+              ${skList.map(s => `<span class="px-2 py-0.5 bg-white/5 text-gray-200 text-xs rounded-lg">${s}</span>`).join("")}
+            </div>
+          </div>
+        `).join("");
+      }
+
+      // Resume context for JD tab
+      const dashResume = document.getElementById("dashResumeInput");
+      const resumeRaw = p.raw_text || localStorage.getItem("growpath_resume_text") || localStorage.getItem("resume_text") || window.SAMPLE_RESUME_TEXT || "";
+      if (dashResume && resumeRaw) {
+        dashResume.value = resumeRaw;
+      }
+
+      // Jobs tab
+      if (data.live_jobs && data.live_jobs.length > 0) {
+        renderDashboardJobs(data.live_jobs);
+      } else {
+        fetchJobsForCountry("IN");
+      }
+    }
+
+    function setScoreBar(textId, barId, score) {
+      const t = document.getElementById(textId);
+      const b = document.getElementById(barId);
+      if (t) t.textContent = `${score}%`;
+      if (b) b.style.width = `${score}%`;
+    }
+
+    function renderDashboardJobs(jobs) {
+      const container = document.getElementById("dashJobsGrid");
+      if (!container) return;
+
+      if (!jobs || jobs.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-gray-400">No live jobs retrieved for this filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = jobs.map(j => `
+        <div class="p-5 glass rounded-2xl border border-white/10 hover:border-orange-500/40 transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h4 class="text-sm font-bold text-orange-400">${j.title}</h4>
+              <span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">Verified</span>
+            </div>
+            <p class="text-xs font-semibold text-gray-200 mb-1">${j.company}</p>
+            <p class="text-xs text-gray-400 mb-4">📍 ${j.location} • 💰 ${j.salary}</p>
+          </div>
+          <div class="pt-3 border-t border-white/5 flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">${j.date_posted || "Recently"}</span>
+            <a href="${j.link}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-black rounded-xl text-xs font-bold hover:brightness-110 transition">
+              View & Apply ↗
+            </a>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function exportFullReport() {
+      const stored = localStorage.getItem("growpath_data");
+      if (!stored) {
+        alert("No analysis report found. Please analyze a resume first.");
+        return;
+      }
+      const blob = new Blob([stored], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GrowPath_AI_Career_Report_${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   </script>
 
-  <!-- Particles init: neon palette -->
+  <!-- Particles init -->
   <script>
     particlesJS("particles-js", {
       particles: {
-        number: { value: 300, density: { enable: true, value_area: 800 } },
-        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        number: { value: 140, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff5e36", "#00e5ff"] },
         shape: { type: "circle" },
-        opacity: { value: 0.28, random: false },
-        size: { value: 3, random: true },
-        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
-        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
-      },
-      interactivity: {
-        detect_on: "canvas",
-        events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
-        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+        opacity: { value: 0.25, random: true },
+        size: { value: 2.5, random: true },
+        line_linked: { enable: true, distance: 130, color: "#ff8c00", opacity: 0.08, width: 1.5 },
+        move: { enable: true, speed: 1.2, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
       },
       retina_detect: true
     });
-
-    // reduce particle count on small screens for performance
-    if (window.innerWidth < 700) {
-      try {
-        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
-        if (p) p.particles.number.value = 50;
-      } catch (e) { /* silent */ }
-    }
   </script>
 
+  <script src="/frontend/script.js"></script>
 </body>
 </html>

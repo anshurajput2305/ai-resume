@@ -2,250 +2,227 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ATS Score Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrowPath AI — ATS Score & Job Description Matcher</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Particles.js for dynamic background -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <style>
     :root{
-      --bg-dark: #0b0b0e;
-      --glass-weak: rgba(255,255,255,0.06);
-      --glass-strong: rgba(255,255,255,0.10);
+      --bg-dark: #08080c;
       --accent: #ff8c00;
-      --muted: #9aa4b2;
+      --muted: #94a3b8;
     }
 
-    html,body{height:100%;margin:0;background:var(--bg-dark);color:#e6eef8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    html,body{
+      height:100%;margin:0;background:var(--bg-dark);color:#e2e8f0;
+      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    }
+    h1, h2, h3, h4 { font-family: 'Outfit', 'Inter', sans-serif; }
 
-    /* Gradient overlay for depth */
     .gradient-overlay{
       position:fixed;inset:0;z-index:1;pointer-events:none;
-      background: linear-gradient(120deg, rgba(255,45,149,0.03), rgba(0,229,255,0.02));
-      animation: overlayShift 18s linear infinite;mix-blend-mode:overlay;
-    }
-    @keyframes overlayShift{
-      0%{ background-position:0% 50% }50%{ background-position:100% 50% }100%{ background-position:0% 50% }
+      background: radial-gradient(circle at 10% 20%, rgba(255, 140, 0, 0.08), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.06), transparent 50%);
     }
 
-    /* Particles container sits behind everything */
-    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.95;filter:blur(0.6px) saturate(1.05);}
+    #particles-js{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.6;}
+    .glass { background: rgba(18, 18, 26, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+    .glass-strong { background: rgba(24, 24, 36, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
+    
+    .accent-btn {
+      background: linear-gradient(135deg, #ff8c00 0%, #f97316 100%);
+      box-shadow: 0 4px 20px rgba(255, 140, 0, 0.35);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .accent-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 140, 0, 0.5);
+    }
 
-    /* Glass panels */
-    .glass { background: var(--glass-weak); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.04); }
-    .glass-light { background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
-
-    /* Small helpers */
-    .accent { color: var(--accent); }
-    .muted { color: var(--muted); }
-
-    /* make sure your content sits above backgrounds */
-    .page-content { position: relative; z-index: 10; }
-
-    /* Responsive - reduce particles effect on mobile */
-    @media (max-width:700px){ #particles-js{opacity:0.8} }
-
-    /* tiny card hover lift */
     .lift { transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s; }
-    .lift:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+    .lift:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
+    .page-content { position: relative; z-index: 10; }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col text-gray-200">
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-black">
 
-  <!-- Background layers -->
   <div id="particles-js" aria-hidden="true"></div>
   <div class="gradient-overlay" aria-hidden="true"></div>
 
-  <div class="page-content">
-    <!-- Header -->
-    <header class="glass-light sticky top-4 z-50 mt-6 rounded-3xl h-12 shadow-md max-w-5xl mx-auto">
-      <div class="max-w-7xl mx-auto flex items-center justify-center py-0.1 px-6">
-        <div class="text-xl font-semibold accent">ATS Score Checker</div>
+  <div class="page-content flex flex-col min-h-screen">
+    
+    <!-- Navbar -->
+    <header class="glass sticky top-4 z-50 mt-4 rounded-3xl shadow-2xl max-w-6xl mx-4 lg:mx-auto border border-white/10">
+      <div class="flex items-center justify-between px-6 py-3">
+        <a href="/" class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 p-0.5 shadow-lg flex items-center justify-center">
+            <div class="w-full h-full bg-[#0d0d12] rounded-[14px] flex items-center justify-center">
+              <span class="text-xl font-black text-orange-400">G</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-base font-bold text-white">GrowPath AI</div>
+            <div class="text-[11px] text-gray-400">ATS Matcher & Skill Gap</div>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+          <a href="/" class="hover:text-orange-400 transition">Resume Parser</a>
+          <a href="/ats" class="text-orange-400 font-semibold">ATS Matcher</a>
+          <a href="/dashboard" class="hover:text-orange-400 transition">Career Dashboard</a>
+        </nav>
+
+        <a href="/dashboard" class="px-4 py-2 text-xs font-bold text-black accent-btn rounded-xl">
+          Open Dashboard →
+        </a>
       </div>
     </header>
 
     <!-- Main Container -->
-    <div class="max-w-3xl mx-auto mt-10 glass rounded-3xl shadow-2xl p-8 lift">
-
-      <h2 class="text-2xl font-semibold accent mb-4">
-        Resume Text (Auto-Filled from Previous Upload)
-      </h2>
-
-      <!-- Prefilled Resume Text -->
-      <textarea id="resumeTextBox" rows="10"
-                class="w-full border border-gray-600 rounded-lg p-3 mb-6 bg-gray-800/50 text-gray-200 placeholder-gray-400"></textarea>
-
-      <!-- JD Input -->
-      <h2 class="text-2xl font-semibold accent mb-2">Job Description:</h2>
-
-      <textarea id="atsJD" rows="6"
-                class="w-full border border-gray-600 rounded-lg p-3 mb-4 bg-gray-800/50 text-gray-200 placeholder-gray-400"></textarea>
-
-      <!-- Button -->
-      <button onclick="analyzeATS()"
-              class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-        Calculate ATS Score
-      </button>
-
-      <!-- Result -->
-      <div id="atsResult" class="mt-6 text-lg font-semibold text-gray-200"></div>
-
-    </div>
-  </div>
-
-  <!-- Prefill Resume -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const resumeBox = document.getElementById("resumeTextBox");
-      const storedResume = localStorage.getItem("resume_text");
-
-      if (storedResume) {
-        resumeBox.value = storedResume;
-      } else {
-        resumeBox.placeholder = "Resume text will appear here after uploading in main page.";
-      }
-    });
-
-    async function analyzeATS() {
-      const resumeText = document.getElementById("resumeTextBox").value.trim();
-      const jobDescription = document.getElementById("atsJD").value.trim();
-      const resultDiv = document.getElementById("atsResult");
+    <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-10 w-full">
       
-      // Validation
-      if (!resumeText) {
-        resultDiv.innerHTML = "❌ Please upload a resume first from the main page.";
-        // Auto-scroll to error message
-        setTimeout(() => {
-          resultDiv.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
-        return;
-      }
-      
-      if (!jobDescription) {
-        resultDiv.innerHTML = "❌ Please enter a job description.";
-        // Auto-scroll to error message
-        setTimeout(() => {
-          resultDiv.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
-        return;
-      }
-      
-      // Show loading
-      resultDiv.innerHTML = "🔄 Analyzing ATS compatibility...";
-      
-      try {
-        const response = await fetch('/calculate_ats_score', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            resume_text: resumeText,
-            job_description: jobDescription
-          })
-        });
+      <!-- Page Header -->
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <span class="text-xs uppercase tracking-widest text-orange-400 font-bold">Targeted Tailoring</span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white mt-1 mb-3">Job Description & ATS Matcher</h1>
+        <p class="text-sm text-gray-400">Compare your resume against any target job opening to uncover skill gaps, keyword overlap, and tailoring opportunities.</p>
+      </div>
+
+      <!-- Dual Column Inputs -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
         
-        const data = await response.json();
-        
-        if (data.error) {
-          resultDiv.innerHTML = `❌ Error: ${data.error}`;
-          return;
-        }
-        
-        if (data.success && data.analysis) {
-          const analysis = data.analysis;
-          
-          // Save analysis to localStorage for dashboard
-          localStorage.setItem("ats_analysis", JSON.stringify(analysis));
-          
-          // Show success message and redirect
-          resultDiv.innerHTML = `
-            <div class="bg-green-600/20 text-green-300 rounded-lg p-4 text-center">
-              <div class="text-lg font-semibold mb-2">✅ Analysis Complete!</div>
-              <div class="mb-4">ATS Score: <span class="text-2xl font-bold">${analysis.ats_score || 'N/A'}</span>/100</div>
-              <button onclick="window.location.href='/frontend/dashboard.html'" 
-                      class="bg-gradient-to-r from-orange-500 to-pink-500 text-black px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                View Detailed Dashboard
+        <!-- Column 1: Resume Text Input -->
+        <div class="glass-strong rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 lift space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>📄</span> Your Resume Text
+            </h3>
+            <button onclick="loadSampleResumeTextOnly()" class="text-xs px-2.5 py-1 glass hover:bg-orange-500/20 text-orange-300 rounded-lg border border-orange-500/30 transition">
+              Insert Sample Resume
+            </button>
+          </div>
+          <p class="text-xs text-gray-400">Auto-filled from your previous upload. You can edit or paste new text below.</p>
+          <textarea id="resumeTextBox" rows="12"
+                    placeholder="Paste or upload your resume text here..."
+                    class="w-full border border-white/15 focus:border-orange-500 rounded-2xl p-4 bg-black/40 text-gray-200 text-xs font-mono leading-relaxed placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"></textarea>
+        </div>
+
+        <!-- Column 2: Target Job Description Input -->
+        <div class="glass-strong rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 lift space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>🎯</span> Target Job Description
+            </h3>
+            <div class="flex gap-1.5 text-xs">
+              <button onclick="fillSampleJD('fullstack')" class="px-2.5 py-1 glass hover:bg-orange-500/20 text-orange-300 rounded-lg border border-orange-500/30 transition cursor-pointer">
+                Full Stack
+              </button>
+              <button onclick="fillSampleJD('ai_ml')" class="px-2.5 py-1 glass hover:bg-orange-500/20 text-orange-300 rounded-lg border border-orange-500/30 transition cursor-pointer">
+                AI / ML
+              </button>
+              <button onclick="fillSampleJD('backend')" class="px-2.5 py-1 glass hover:bg-orange-500/20 text-orange-300 rounded-lg border border-orange-500/30 transition cursor-pointer">
+                Backend
               </button>
             </div>
-          `;
-          
-          // Auto-scroll to results with smooth animation
-          setTimeout(() => {
-            resultDiv.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'nearest'
-            });
-          }, 100);
-          
-        } else {
-          resultDiv.innerHTML = "❌ Unable to analyze ATS score. Please try again.";
-          
-          // Auto-scroll to error message too
-          setTimeout(() => {
-            resultDiv.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'nearest'
-            });
-          }, 100);
-        }
-        
-      } catch (error) {
-        console.error('ATS Analysis Error:', error);
-        resultDiv.innerHTML = "❌ Network error. Please check your connection and try again.";
-        
-        // Auto-scroll to error message
-        setTimeout(() => {
-          resultDiv.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
+          </div>
+
+          <!-- Upload JD Option -->
+          <div class="space-y-2">
+            <input type="file" id="atsJDFileInput" accept=".pdf,.docx,.doc,.txt" class="hidden" onchange="if(this.files.length) handleJDFileSelected(this.files[0])" />
+            
+            <div id="atsJDDropZone" onclick="document.getElementById('atsJDFileInput').click()"
+                 class="group relative border border-dashed border-white/20 hover:border-orange-500/60 bg-black/30 hover:bg-orange-500/5 rounded-2xl p-3 text-center cursor-pointer transition-all duration-200">
+              <div class="flex items-center justify-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-400 group-hover:scale-110 flex items-center justify-center text-sm transition-transform shrink-0">
+                  📄
+                </div>
+                <div class="text-left">
+                  <div class="text-xs font-semibold text-gray-200 group-hover:text-orange-300 transition-colors">
+                    <span class="text-orange-400 font-bold">Upload JD File</span> or drag & drop here
+                  </div>
+                  <div class="text-[10px] text-gray-400">
+                    Supported: <span class="text-gray-300 font-medium">PDF • DOCX • TXT</span> (Max 10 MB)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Status / Loaded File Info Banner -->
+            <div id="atsJDFileStatus" class="hidden"></div>
+          </div>
+
+          <!-- Textarea for Extracted / Pasted Requirements -->
+          <div class="relative">
+            <div class="text-[11px] text-gray-400 mb-1 flex items-center justify-between">
+              <span>Or edit / paste job description text below:</span>
+            </div>
+            <textarea id="atsJD" rows="8"
+                      placeholder="Paste target job opening requirements, qualifications, and responsibilities here (or upload a JD file above)..."
+                      class="w-full border border-white/15 focus:border-orange-500 rounded-2xl p-4 bg-black/40 text-gray-200 text-xs font-mono leading-relaxed placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"></textarea>
+            
+            <!-- Extraction Loading Overlay -->
+            <div id="atsJDExtractLoader" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 p-4 text-center">
+              <div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-xs text-orange-300 font-semibold">Extracting text from Job Description...</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Button -->
+      <div class="text-center mb-8">
+        <button onclick="analyzeJobMatch()"
+                class="px-8 py-4 accent-btn text-black font-extrabold text-sm rounded-2xl shadow-xl hover:brightness-110 flex items-center justify-center gap-2 mx-auto">
+          <span>⚡</span> Calculate ATS Compatibility & Skill Gap
+        </button>
+      </div>
+
+      <!-- Result Container -->
+      <div id="atsResult" class="hidden"></div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass mt-auto py-6 border-t border-white/10 text-center text-xs text-gray-500">
+      © 2026 GrowPath AI — Next-Generation Career Intelligence Platform
+    </footer>
+
+  </div>
+
+  <!-- Roadmap Modal -->
+  <div id="roadmapModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="roadmapModalContent" class="glass-strong rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-orange-500/40 shadow-2xl max-h-[90vh] overflow-y-auto"></div>
+  </div>
+
+  <script>
+    function loadSampleResumeTextOnly() {
+      const box = document.getElementById("resumeTextBox");
+      if (box && window.SAMPLE_RESUME_TEXT) {
+        box.value = window.SAMPLE_RESUME_TEXT;
       }
     }
-  </script>
 
-  <!-- Particles init: neon palette -->
-  <script>
     particlesJS("particles-js", {
       particles: {
-        number: { value: 300, density: { enable: true, value_area: 800 } },
-        color: { value: ["#ff8c00", "#ff2d95", "#00e5ff"] },
+        number: { value: 120, density: { enable: true, value_area: 800 } },
+        color: { value: ["#ff8c00", "#ff5e36"] },
         shape: { type: "circle" },
-        opacity: { value: 0.28, random: false },
-        size: { value: 3, random: true },
-        line_linked: { enable: true, distance: 140, color: "#ff8c00", opacity: 0.12, width: 3 },
-        move: { enable: true, speed: 1.6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
-      },
-      interactivity: {
-        detect_on: "canvas",
-        events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true },
-        modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
+        opacity: { value: 0.25, random: true },
+        size: { value: 2.5, random: true },
+        line_linked: { enable: true, distance: 130, color: "#ff8c00", opacity: 0.08, width: 1.5 },
+        move: { enable: true, speed: 1.2, direction: "none", random: false, straight: false, out_mode: "out", bounce: false }
       },
       retina_detect: true
     });
-
-    // reduce particle count on small screens for performance
-    if (window.innerWidth < 700) {
-      try {
-        const p = window.pJSDom && window.pJSDom[0] && window.pJSDom[0].pJS;
-        if (p) p.particles.number.value = 50;
-      } catch (e) { /* silent */ }
-    }
   </script>
 
+  <script src="/frontend/script.js"></script>
 </body>
 </html>
